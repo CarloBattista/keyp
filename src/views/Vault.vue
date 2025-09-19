@@ -2,18 +2,8 @@
   <div class="flex">
     <sidebar />
     <div class="w-[calc(100%-200px)] ml-[200px] p-4">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex mb-6">
         <h1 class="text-xl font-semibold">Ciao, {{ auth.profile?.first_name }}</h1>
-        <button @click="openNewAccountModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-              clip-rule="evenodd"
-            ></path>
-          </svg>
-          Aggiungi Account
-        </button>
       </div>
       <!-- Lista degli account -->
       <div class="flex flex-col gap-4">
