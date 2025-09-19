@@ -1,35 +1,60 @@
 import CryptoJS from 'crypto-js';
+import { argon2id } from 'hash-wasm';
 
 /**
- * Genera una chiave vault casuale per l'utente
- * @returns {string} - Chiave vault casuale di 64 caratteri
+ * Genera un salt unico per il vault dell'utente
+ * @returns {string} - Salt casuale di 32 caratteri hex
  */
-export function generateVaultKey() {
-  // Genera una chiave casuale di 256 bit (32 byte = 64 caratteri hex)
+export function generateVaultSalt() {
   return CryptoJS.lib.WordArray.random(32).toString();
 }
 
 /**
- * Genera un salt casuale
- * @returns {string} - Salt casuale di 32 caratteri hex
+ * Deriva la vault_key dalla master password usando Argon2id (hash-wasm)
+ * @param {string} masterPassword - La master password dell'utente
+ * @param {string} vaultSalt - Il salt unico dell'utente salvato su Supabase
+ * @returns {Promise<string>} - La vault_key derivata
  */
-export function generateSalt() {
+export async function deriveVaultKey(masterPassword, vaultSalt) {
+  try {
+    const hash = await argon2id({
+      password: masterPassword,
+      salt: vaultSalt,
+      parallelism: 1,
+      iterations: 3,
+      memorySize: 65536, // 64MB
+      hashLength: 32,
+      outputType: 'hex',
+    });
+
+    return hash;
+  } catch (error) {
+    console.error('Errore durante la derivazione della vault key:', error);
+    throw new Error('Impossibile derivare la vault key');
+  }
+}
+
+/**
+ * Genera un salt casuale per le singole password
+ * @returns {string} - Salt casuale di 16 caratteri hex
+ */
+export function generatePasswordSalt() {
   return CryptoJS.lib.WordArray.random(16).toString();
 }
 
 /**
- * Cripta una password usando AES con salt per maggiore sicurezza
+ * Cripta una password usando AES con la vault_key derivata
  * @param {string} password - La password da crittografare
- * @param {string} vaultKey - La chiave vault dell'utente
- * @param {string} salt - Salt opzionale (se non fornito, ne viene generato uno nuovo)
+ * @param {string} vaultKey - La vault_key derivata da Argon2
+ * @param {string} passwordSalt - Salt opzionale per la password (se non fornito, ne viene generato uno nuovo)
  * @returns {object} - Oggetto contenente password crittografata e salt
  */
-export function encryptPassword(password, vaultKey, salt = null) {
+export function encryptPasswordWithVaultKey(password, vaultKey, passwordSalt = null) {
   try {
     // Genera un salt casuale se non fornito
-    const usedSalt = salt || generateSalt();
+    const usedSalt = passwordSalt || generatePasswordSalt();
 
-    // Combina la chiave vault con il salt per una sicurezza maggiore
+    // Combina la vault_key con il salt per una sicurezza maggiore
     const derivedKey = CryptoJS.PBKDF2(vaultKey, usedSalt, {
       keySize: 256 / 32,
       iterations: 10000,
@@ -39,7 +64,7 @@ export function encryptPassword(password, vaultKey, salt = null) {
 
     return {
       encryptedPassword: encrypted,
-      salt: usedSalt,
+      passwordSalt: usedSalt,
     };
   } catch (error) {
     console.error('Errore durante la crittografia:', error);
@@ -48,16 +73,16 @@ export function encryptPassword(password, vaultKey, salt = null) {
 }
 
 /**
- * Decripta una password usando AES con il salt corrispondente
+ * Decripta una password usando AES con la vault_key derivata
  * @param {string} encryptedPassword - La password crittografata
- * @param {string} vaultKey - La chiave vault dell'utente
- * @param {string} salt - Il salt utilizzato per la crittografia
+ * @param {string} vaultKey - La vault_key derivata da Argon2
+ * @param {string} passwordSalt - Il salt utilizzato per la crittografia
  * @returns {string} - La password in chiaro
  */
-export function decryptPassword(encryptedPassword, vaultKey, salt) {
+export function decryptPasswordWithVaultKey(encryptedPassword, vaultKey, passwordSalt) {
   try {
     // Ricostruisce la stessa chiave derivata usata per la crittografia
-    const derivedKey = CryptoJS.PBKDF2(vaultKey, salt, {
+    const derivedKey = CryptoJS.PBKDF2(vaultKey, passwordSalt, {
       keySize: 256 / 32,
       iterations: 10000,
     });
@@ -66,7 +91,7 @@ export function decryptPassword(encryptedPassword, vaultKey, salt) {
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
 
     if (!plaintext) {
-      throw new Error('Decrittografia fallita - chiave o salt non validi');
+      throw new Error('Decrittografia fallita - vault_key o salt non validi');
     }
 
     return plaintext;
@@ -77,9 +102,101 @@ export function decryptPassword(encryptedPassword, vaultKey, salt) {
 }
 
 /**
- * Funzioni di compatibilità per il codice esistente (senza salt)
- * Queste funzioni mantengono la compatibilità con i dati già esistenti
+ * Cancella dati sensibili dalla memoria
+ * @param {object} obj - Oggetto contenente dati sensibili
+ * @param {array} sensitiveFields - Array di campi da cancellare
  */
+export function clearSensitiveData(obj, sensitiveFields = ['masterPassword', 'vaultKey', 'decryptedPassword', 'plaintext']) {
+  sensitiveFields.forEach((field) => {
+    if (obj && obj[field]) {
+      obj[field] = null;
+      delete obj[field];
+    }
+  });
+}
+
+/**
+ * Valida la forza della master password
+ * @param {string} masterPassword - La master password da validare
+ * @returns {object} - Oggetto con validità e suggerimenti
+ */
+export function validateMasterPassword(masterPassword) {
+  const minLength = 12;
+  const hasUpperCase = /[A-Z]/.test(masterPassword);
+  const hasLowerCase = /[a-z]/.test(masterPassword);
+  const hasNumbers = /\d/.test(masterPassword);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(masterPassword);
+
+  const issues = [];
+
+  if (masterPassword.length < minLength) {
+    issues.push(`Deve essere lunga almeno ${minLength} caratteri`);
+  }
+  if (!hasUpperCase) {
+    issues.push('Deve contenere almeno una lettera maiuscola');
+  }
+  if (!hasLowerCase) {
+    issues.push('Deve contenere almeno una lettera minuscola');
+  }
+  if (!hasNumbers) {
+    issues.push('Deve contenere almeno un numero');
+  }
+  if (!hasSpecialChar) {
+    issues.push('Deve contenere almeno un carattere speciale');
+  }
+
+  return {
+    isValid: issues.length === 0,
+    issues: issues,
+    strength: issues.length === 0 ? 'forte' : issues.length <= 2 ? 'media' : 'debole',
+  };
+}
+
+// Funzioni legacy per compatibilità con dati esistenti
+export function generateVaultKey() {
+  return CryptoJS.lib.WordArray.random(32).toString();
+}
+
+export function generateSalt() {
+  return CryptoJS.lib.WordArray.random(16).toString();
+}
+
+export function encryptPassword(password, vaultKey, salt = null) {
+  try {
+    const usedSalt = salt || generateSalt();
+    const derivedKey = CryptoJS.PBKDF2(vaultKey, usedSalt, {
+      keySize: 256 / 32,
+      iterations: 10000,
+    });
+    const encrypted = CryptoJS.AES.encrypt(password, derivedKey.toString()).toString();
+    return {
+      encryptedPassword: encrypted,
+      salt: usedSalt,
+    };
+  } catch (error) {
+    console.error('Errore durante la crittografia:', error);
+    throw new Error('Impossibile crittografare la password');
+  }
+}
+
+export function decryptPassword(encryptedPassword, vaultKey, salt) {
+  try {
+    const derivedKey = CryptoJS.PBKDF2(vaultKey, salt, {
+      keySize: 256 / 32,
+      iterations: 10000,
+    });
+    const decrypted = CryptoJS.AES.decrypt(encryptedPassword, derivedKey.toString());
+    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+    if (!plaintext) {
+      throw new Error('Decrittografia fallita - chiave o salt non validi');
+    }
+    return plaintext;
+  } catch (error) {
+    console.error('Errore durante la decrittografia:', error);
+    throw new Error('Impossibile decrittografare la password');
+  }
+}
+
 export function encryptPasswordLegacy(password, vaultKey) {
   try {
     const encrypted = CryptoJS.AES.encrypt(password, vaultKey).toString();
@@ -101,49 +218,43 @@ export function decryptPasswordLegacy(encryptedPassword, vaultKey) {
 }
 
 /**
- * Pulisce i dati sensibili dalla memoria
- * @param {object} obj - Oggetto contenente dati sensibili
- * @param {array} sensitiveFields - Array dei campi da pulire
+ * Genera un hash di verifica per la master password
+ * @param {string} masterPassword - La master password dell'utente
+ * @param {string} vaultSalt - Il salt unico dell'utente
+ * @returns {Promise<string>} - Hash di verifica
  */
-export function clearSensitiveData(obj, sensitiveFields = ['password', 'decryptedPassword', 'plaintext']) {
-  sensitiveFields.forEach((field) => {
-    if (obj && obj[field]) {
-      // Sovrascrive il valore con caratteri casuali prima di eliminarlo
-      obj[field] = CryptoJS.lib.WordArray.random(obj[field].length).toString().substring(0, obj[field].length);
-      delete obj[field];
-    }
-  });
+export async function generateMasterPasswordHash(masterPassword, vaultSalt) {
+  try {
+    const hash = await argon2id({
+      password: masterPassword + '_verification',
+      salt: vaultSalt,
+      parallelism: 1,
+      iterations: 3,
+      memorySize: 65536,
+      hashLength: 32,
+      outputType: 'hex',
+    });
+
+    return hash;
+  } catch (error) {
+    console.error('Errore durante la generazione hash verifica:', error);
+    throw new Error('Impossibile generare hash di verifica');
+  }
 }
 
 /**
- * Cripta una password usando AES con una chiave specifica (funzione alternativa)
- * @param {string} password - La password da crittografare
- * @param {string} vaultKey - La chiave vault dell'utente
- * @returns {string} - La password crittografata
+ * Verifica se la master password è corretta
+ * @param {string} masterPassword - La master password da verificare
+ * @param {string} vaultSalt - Il salt dell'utente
+ * @param {string} storedHash - L'hash salvato nel database
+ * @returns {Promise<boolean>} - True se la password è corretta
  */
-export function encryptPasswordWithVaultKey(password, vaultKey) {
-  return encryptPasswordLegacy(password, vaultKey);
-}
-
-/**
- * Decripta una password usando AES con una chiave specifica (funzione alternativa)
- * @param {string} encryptedPassword - La password crittografata
- * @param {string} vaultKey - La chiave vault dell'utente
- * @returns {string} - La password in chiaro
- */
-export function decryptPasswordWithVaultKey(encryptedPassword, vaultKey) {
-  return decryptPasswordLegacy(encryptedPassword, vaultKey);
-}
-
-/**
- * Deriva una chiave da una master password e un salt
- * @param {string} masterPassword - La master password
- * @param {string} salt - Il salt
- * @returns {string} - La chiave derivata
- */
-export function deriveKey(masterPassword, salt) {
-  return CryptoJS.PBKDF2(masterPassword, salt, {
-    keySize: 256 / 32,
-    iterations: 10000,
-  }).toString();
+export async function verifyMasterPassword(masterPassword, vaultSalt, storedHash) {
+  try {
+    const hash = await generateMasterPasswordHash(masterPassword, vaultSalt);
+    return hash === storedHash;
+  } catch (error) {
+    console.error('Errore durante la verifica:', error);
+    return false;
+  }
 }

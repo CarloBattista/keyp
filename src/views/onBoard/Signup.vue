@@ -59,7 +59,7 @@
 <script>
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
-import { generateVaultKey } from '../../lib/crypto';
+import { generateVaultSalt } from '../../lib/crypto';
 
 export default {
   name: 'Signup',
@@ -69,10 +69,10 @@ export default {
 
       user: {
         data: {
-          first_name: '',
-          last_name: '',
-          email: 'carlo@gmail.com',
-          password: 'carlo',
+          first_name: 'Carlo',
+          last_name: 'Battista',
+          email: 'carlobattista@gmail.com',
+          password: 'carlobattista',
         },
         error: {
           first_name: null,
@@ -113,13 +113,13 @@ export default {
       }
 
       try {
-        const vaultKey = generateVaultKey();
+        const vaultSalt = generateVaultSalt();
 
         const { error } = await supabase.from('profiles').insert({
           user_id: user.id,
           first_name: this.user.data.first_name,
           last_name: this.user.data.last_name,
-          vault_key: vaultKey,
+          vault_salt: vaultSalt,
         });
 
         if (!error) {

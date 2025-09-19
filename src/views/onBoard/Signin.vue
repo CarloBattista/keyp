@@ -37,17 +37,18 @@
 <script>
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
+import { store } from '../../data/store';
 
 export default {
   name: 'Signin',
   data() {
     return {
       auth,
-
+      store,
       user: {
         data: {
-          email: 'carlo@gmail.com',
-          password: 'carlo',
+          email: 'carlobattista@gmail.com',
+          password: 'carlobattista',
         },
         error: {
           email: null,
@@ -72,8 +73,7 @@ export default {
           this.auth.session = data.session;
           this.auth.isAuthenticated = true;
 
-          localStorage.setItem('isAuthenticated', true);
-
+          localStorage.setItem('isAuthenticated', 'true');
           this.$router.push({ name: 'vault' });
         }
       } catch (e) {

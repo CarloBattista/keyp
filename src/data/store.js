@@ -2,9 +2,16 @@ import { reactive } from 'vue';
 
 export const store = reactive({
   accounts: {
-    data: null,
+    data: [],
     error: null,
     loading: false,
+  },
+
+  security: {
+    vaultKey: null, // Derivata dalla master password, mai salvata
+    isUnlocked: false, // Indica se il vault è sbloccato
+    autoLockTimer: null, // Timer per blocco automatico
+    lastActivity: null, // Ultima attività per auto-lock
   },
 
   modals: {
@@ -27,4 +34,68 @@ export const store = reactive({
       loading: false,
     },
   },
+
+  // Funzioni di sicurezza
+  lockVault() {
+    this.security.vaultKey = null;
+    this.security.isUnlocked = false;
+    this.accounts.data = [];
+
+    // Rimuove la vault key dal sessionStorage
+    sessionStorage.removeItem('vaultKey');
+
+    if (this.security.autoLockTimer) {
+      clearTimeout(this.security.autoLockTimer);
+      this.security.autoLockTimer = null;
+    }
+  },
+  unlockVault(vaultKey) {
+    this.security.vaultKey = vaultKey;
+    this.security.isUnlocked = true;
+    this.security.lastActivity = Date.now();
+
+    // Salva la vault key nel sessionStorage
+    sessionStorage.setItem('vaultKey', vaultKey);
+
+    this.startAutoLockTimer();
+  },
+  restoreVaultFromSession() {
+    const storedVaultKey = sessionStorage.getItem('vaultKey');
+    if (storedVaultKey) {
+      this.security.vaultKey = storedVaultKey;
+      this.security.isUnlocked = true;
+      this.security.lastActivity = Date.now();
+      this.startAutoLockTimer();
+      return true;
+    }
+    return false;
+  },
+  startAutoLockTimer() {
+    // Auto-lock dopo 15 minuti di inattività
+    if (this.security.autoLockTimer) {
+      clearTimeout(this.security.autoLockTimer);
+    }
+    this.security.autoLockTimer = setTimeout(
+      () => {
+        this.lockVault();
+      },
+      15 * 60 * 1000
+    ); // 15 minuti
+  },
+  updateActivity() {
+    this.security.lastActivity = Date.now();
+    if (this.security.isUnlocked) {
+      this.startAutoLockTimer();
+    }
+  },
+  init() {
+    // Prova a ripristinare automaticamente la vault key al caricamento
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    if (isAuthenticated && !this.security.isUnlocked) {
+      // console.log('Auto-restoring vault from sessionStorage on init...');
+      this.restoreVaultFromSession();
+    }
+  },
 });
+
+store.init();

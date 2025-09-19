@@ -154,7 +154,7 @@
 import { supabase } from '../lib/supabase';
 import { auth } from '../data/auth';
 import { store } from '../data/store';
-import { encryptPassword, decryptPassword, decryptPasswordLegacy, clearSensitiveData } from '../lib/crypto';
+import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../lib/crypto';
 
 import sidebar from '../components/sidebar/sidebar.vue';
 import modal from '../components/modal/modal.vue';
@@ -173,6 +173,18 @@ export default {
     };
   },
   methods: {
+    // Verifica che la vault key sia disponibile nello store
+    ensureVaultKey() {
+      if (!this.store.security.vaultKey || !this.store.security.isUnlocked) {
+        throw new Error('Vault non sbloccato. Effettua nuovamente il login.');
+      }
+
+      // Aggiorna l'attività per il timer di auto-lock
+      this.store.updateActivity();
+
+      return this.store.security.vaultKey;
+    },
+
     clearAccountSensitiveData(account, index) {
       // Pulisce i dati sensibili dall'account
       clearSensitiveData(account, ['tempDecryptedPassword']);
@@ -218,21 +230,22 @@ export default {
     },
 
     async loadAccounts() {
-      if (!this.auth.profile?.id || !this.auth.profile?.vault_key) {
+      this.store.accounts.loading = true;
+
+      if (!this.auth.profile || !this.auth.profile.id) {
+        this.store.accounts.loading = false;
         return;
       }
 
-      this.store.accounts.loading = true;
       try {
-        const { data, error } = await supabase.from('vault_entries').select('*').eq('profile_id', this.auth.profile.id);
+        const { data, error } = await supabase
+          .from('vault_entries')
+          .select('id, name, email, password, password_salt, notes')
+          .eq('profile_id', this.auth.profile.id);
 
         if (!error) {
-          // Carica gli account senza decrittografare immediatamente le password
-          this.store.accounts.data = data.map((account) => ({
-            ...account,
-            showPassword: false,
-            tempDecryptedPassword: null, // Password temporanea per la visualizzazione
-          }));
+          // console.log(data);
+          this.store.accounts.data = data;
         }
       } catch (e) {
         console.error(e);
@@ -243,21 +256,24 @@ export default {
     async actionAddAccount() {
       this.store.modals.newAccount.loading = true;
 
-      if (!this.auth.profile.id && !this.auth.profile.vault_key) {
+      if (!this.auth.profile.id) {
         this.store.modals.newAccount.loading = false;
         return;
       }
 
       try {
-        // Usa la nuova funzione con salt
-        const encryptionResult = encryptPassword(this.store.modals.newAccount.data.password, this.auth.profile.vault_key);
+        // Usa la vault key già derivata durante il login
+        const vaultKey = this.ensureVaultKey();
+
+        // Usa la nuova funzione con vault key derivata
+        const encryptionResult = encryptPasswordWithVaultKey(this.store.modals.newAccount.data.password, vaultKey);
 
         const { error } = await supabase.from('vault_entries').insert({
           profile_id: this.auth.profile.id,
           name: this.store.modals.newAccount.data.name,
           email: this.store.modals.newAccount.data.email,
           password: encryptionResult.encryptedPassword,
-          salt: encryptionResult.salt, // Salva il salt nel database
+          password_salt: encryptionResult.passwordSalt,
           notes: this.store.modals.newAccount.data.notes,
         });
 
@@ -267,6 +283,13 @@ export default {
         }
       } catch (e) {
         console.error(e);
+        if (e.message.includes('Vault non sbloccato')) {
+          alert('Sessione scaduta. Effettua nuovamente il login.');
+          this.$router.push({ name: 'signin' });
+        } else {
+          // eslint-disable-next-line quotes
+          alert("Errore nell'aggiunta dell'account.");
+        }
       } finally {
         this.store.modals.newAccount.loading = false;
       }
@@ -279,14 +302,17 @@ export default {
       } else {
         // Mostra la password decrittografandola temporaneamente
         try {
+          // Usa la vault key già derivata durante il login
+          const vaultKey = this.ensureVaultKey();
+
           let decryptedPassword;
 
-          // Prova prima con il nuovo metodo (con salt)
-          if (account.salt) {
-            decryptedPassword = decryptPassword(account.password, this.auth.profile.vault_key, account.salt);
+          // Prova prima con il nuovo metodo (con password_salt)
+          if (account.password_salt) {
+            decryptedPassword = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
           } else {
-            // Fallback per i dati legacy (senza salt)
-            decryptedPassword = decryptPasswordLegacy(account.password, this.auth.profile.vault_key);
+            // Fallback per i dati legacy (senza password_salt)
+            decryptedPassword = decryptPasswordLegacy(account.password, vaultKey);
           }
 
           account.tempDecryptedPassword = decryptedPassword;
@@ -296,18 +322,27 @@ export default {
           this.setSensitiveDataTimer(account, index, 30000);
         } catch (error) {
           console.error('Errore nella decrittografia:', error);
+          if (error.message.includes('Vault non sbloccato')) {
+            alert('Sessione scaduta. Effettua nuovamente il login.');
+            this.$router.push({ name: 'signin' });
+          } else {
+            alert('Errore nella decrittografia.');
+          }
         }
       }
     },
-    async copyPasswordToClipboard(account, index) {
+    async copyPasswordToClipboard(account) {
       try {
+        // Usa la vault key già derivata durante il login
+        const vaultKey = this.ensureVaultKey();
+
         let passwordToCopy;
 
         // Decrittografa temporaneamente per la copia
-        if (account.salt) {
-          passwordToCopy = decryptPassword(account.password, this.auth.profile.vault_key, account.salt);
+        if (account.password_salt) {
+          passwordToCopy = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
         } else {
-          passwordToCopy = decryptPasswordLegacy(account.password, this.auth.profile.vault_key);
+          passwordToCopy = decryptPasswordLegacy(account.password, vaultKey);
         }
 
         await navigator.clipboard.writeText(passwordToCopy);
@@ -319,13 +354,19 @@ export default {
         // this.showCopyFeedback();
       } catch (err) {
         console.error('Errore nella copia:', err);
+        if (err.message.includes('Vault non sbloccato')) {
+          alert('Sessione scaduta. Effettua nuovamente il login.');
+          this.$router.push({ name: 'signin' });
+        } else {
+          alert('Errore nella copia della password.');
+        }
       }
     },
   },
   watch: {
     'auth.profile': {
       handler(value) {
-        if (value) {
+        if (value && this.store.security.isUnlocked) {
           this.loadAccounts();
         }
       },
@@ -333,19 +374,26 @@ export default {
     },
   },
   async mounted() {
-    await this.loadAccounts();
+    if (!this.store.security.isUnlocked && this.auth.isAuthenticated) {
+      // console.log('Trying to restore vault from sessionStorage...');
+      this.store.restoreVaultFromSession();
+      // console.log('Vault restored from session:', restored);
+    }
+
+    if (this.store.security.isUnlocked) {
+      // console.log('Calling loadAccounts from mounted');
+      await this.loadAccounts();
+    } else {
+      // console.log('Vault is locked, not loading accounts');
+    }
   },
   beforeUnmount() {
     // Pulisce tutti i timer quando il componente viene distrutto
     this.sensitiveDataTimers.forEach((timer) => clearTimeout(timer));
     this.sensitiveDataTimers.clear();
 
-    // Pulisce tutti i dati sensibili dagli account
-    if (this.store.accounts.data) {
-      this.store.accounts.data.forEach((account, index) => {
-        this.clearAccountSensitiveData(account, index);
-      });
-    }
+    // Opzionale: pulisce la vault key se l'utente naviga via
+    // sessionStorage.removeItem('vaultKey');
   },
 };
 </script>
