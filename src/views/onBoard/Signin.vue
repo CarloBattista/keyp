@@ -38,6 +38,7 @@
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
+import { deriveVaultKey } from '../../lib/crypto';
 
 export default {
   name: 'Signin',
@@ -69,9 +70,20 @@ export default {
         });
 
         if (!error) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', data.user.id).maybeSingle();
+
+          // Usa la password di Supabase come "master password" per derivare la vaultKey
+          // Questo mantiene la compatibilità con i dati esistenti
+          const vaultKey = await deriveVaultKey(this.user.data.password, profile.vault_salt);
+
+          // Imposta auth e profilo
           this.auth.user = data.user;
           this.auth.session = data.session;
           this.auth.isAuthenticated = true;
+          this.auth.profile = profile;
+
+          // Sblocca il vault con la vaultKey derivata
+          this.store.unlockVault(vaultKey);
 
           localStorage.setItem('isAuthenticated', 'true');
           this.$router.push({ name: 'vault' });

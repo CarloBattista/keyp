@@ -154,7 +154,8 @@
 import { supabase } from '../lib/supabase';
 import { auth } from '../data/auth';
 import { store } from '../data/store';
-import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../lib/crypto';
+import { deriveVaultKey, encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../lib/crypto';
+import { logout, forceLogout } from '../lib/authService';
 
 import sidebar from '../components/sidebar/sidebar.vue';
 import modal from '../components/modal/modal.vue';
@@ -321,12 +322,14 @@ export default {
           // Imposta un timer per nascondere automaticamente la password dopo 30 secondi
           this.setSensitiveDataTimer(account, index, 30000);
         } catch (error) {
-          console.error('Errore nella decrittografia:', error);
+          // console.error('Errore nella decrittografia:', error);
+          await logout();
+          forceLogout();
           if (error.message.includes('Vault non sbloccato')) {
-            alert('Sessione scaduta. Effettua nuovamente il login.');
+            // alert('Sessione scaduta. Effettua nuovamente il login.');
             this.$router.push({ name: 'signin' });
           } else {
-            alert('Errore nella decrittografia.');
+            // alert('Errore nella decrittografia.');
           }
         }
       }
@@ -374,17 +377,59 @@ export default {
     },
   },
   async mounted() {
+    // console.log('Vault mounted - isUnlocked:', this.store.security.isUnlocked);
+    // console.log('Auth isAuthenticated:', this.auth.isAuthenticated);
+
+    // Prova a ripristinare dal sessionStorage
     if (!this.store.security.isUnlocked && this.auth.isAuthenticated) {
       // console.log('Trying to restore vault from sessionStorage...');
       this.store.restoreVaultFromSession();
       // console.log('Vault restored from session:', restored);
     }
 
-    if (this.store.security.isUnlocked) {
+    // Se autenticato ma vault bloccato, chiedi la password per sbloccare
+    if (this.auth.isAuthenticated && !this.store.security.isUnlocked) {
+      // console.log('User authenticated but vault locked - prompting for password');
+      await this.promptForVaultUnlock();
+    }
+
+    // Carica gli account solo se sbloccato E profilo disponibile
+    if (this.store.security.isUnlocked && this.auth.profile && this.auth.profile.id) {
       // console.log('Calling loadAccounts from mounted');
       await this.loadAccounts();
     } else {
-      // console.log('Vault is locked, not loading accounts');
+      // console.log('Vault locked or profile not available, not loading accounts');
+    }
+  },
+
+  // Aggiungi questo nuovo metodo
+  async promptForVaultUnlock() {
+    const password = prompt('Inserisci la tua password per sbloccare il vault:');
+
+    if (password) {
+      try {
+        // Deriva la vaultKey dalla password inserita
+        const vaultKey = await deriveVaultKey(password, this.auth.profile.vault_salt);
+
+        // Sblocca il vault
+        this.store.unlockVault(vaultKey);
+
+        // console.log('Vault unlocked successfully');
+
+        // Carica gli account
+        if (this.auth.profile && this.auth.profile.id) {
+          await this.loadAccounts();
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Password non corretta o errore nello sblocco del vault.');
+
+        // Logout se non riesce a sbloccare
+        this.$router.push({ name: 'signin' });
+      }
+    } else {
+      // Se annulla, torna al login
+      this.$router.push({ name: 'signin' });
     }
   },
   beforeUnmount() {
