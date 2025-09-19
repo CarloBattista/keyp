@@ -5,14 +5,14 @@ const routes = [
   {
     path: '/identity/signup',
     name: 'signup',
-    component: () => import('../views/onBoard/Signup.vue'),
+    component: () => import('../views/Onboarding/Signup.vue'),
     props: true,
     meta: { title: 'Keyp • Signup' },
   },
   {
     path: '/identity/signin',
     name: 'signin',
-    component: () => import('../views/onBoard/Signin.vue'),
+    component: () => import('../views/Onboarding/Signin.vue'),
     props: true,
     meta: { title: 'Keyp • Signin' },
   },
@@ -30,7 +30,7 @@ const routes = [
     name: 'edit-vault',
     component: () => import('../views/Vault/Vault-edit.vue'),
     props: true,
-    meta: { title: 'Keyp • Vault' },
+    meta: { title: 'Keyp' },
   },
 ];
 
