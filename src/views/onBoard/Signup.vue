@@ -59,6 +59,7 @@
 <script>
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
+import { generateVaultKey } from '../../lib/crypto';
 
 export default {
   name: 'Signup',
@@ -112,10 +113,13 @@ export default {
       }
 
       try {
+        const vaultKey = generateVaultKey();
+
         const { error } = await supabase.from('profiles').insert({
           user_id: user.id,
           first_name: this.user.data.first_name,
           last_name: this.user.data.last_name,
+          vault_key: vaultKey,
         });
 
         if (!error) {

@@ -25,6 +25,13 @@ const routes = [
     props: true,
     meta: { title: 'Keyp • Home' },
   },
+  {
+    path: '/vault',
+    name: 'vault',
+    component: () => import('../views/Vault.vue'),
+    props: true,
+    meta: { title: 'Keyp • Vault' },
+  },
 ];
 
 const router = createRouter({

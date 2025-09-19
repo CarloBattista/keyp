@@ -74,7 +74,7 @@ export default {
 
           localStorage.setItem('isAuthenticated', true);
 
-          this.$router.push({ name: 'home' });
+          this.$router.push({ name: 'vault' });
         }
       } catch (e) {
         console.error(e);
