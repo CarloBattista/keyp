@@ -3,11 +3,12 @@
     <sidebar />
     <div class="w-[calc(100%-200px)] ml-[200px] p-4">
       <div class="flex mb-6">
-        <h1 class="text-xl font-semibold">Ciao, {{ auth.profile?.first_name }}</h1>
+        <h1 class="text-xl font-semibold">Ciao, {{ auth.profile?.first_name }} (FOR TESTING)</h1>
       </div>
       <!-- Lista degli account -->
       <div class="flex flex-col gap-4">
         <div
+          @click="handleAccount(account)"
           v-for="(account, accountIndex) in store.accounts.data"
           :key="account.id"
           class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
@@ -23,7 +24,7 @@
                   readonly
                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded px-2 py-1 w-48"
                 />
-                <button @click="togglePasswordVisibility(account, accountIndex)" class="text-gray-500 hover:text-gray-700">
+                <button @click.stop="togglePasswordVisibility(account, accountIndex)" class="text-gray-500 hover:text-gray-700">
                   <svg v-if="!account.showPassword" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                     <path
@@ -43,7 +44,7 @@
                     ></path>
                   </svg>
                 </button>
-                <button @click="copyPasswordToClipboard(account, accountIndex)" class="text-gray-500 hover:text-gray-700" title="Copia password">
+                <button @click.stop="copyPasswordToClipboard(account, accountIndex)" class="text-gray-500 hover:text-gray-700" title="Copia password">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path>
                     <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
@@ -151,14 +152,20 @@
 </template>
 
 <script>
-import { supabase } from '../lib/supabase';
-import { auth } from '../data/auth';
-import { store } from '../data/store';
-import { deriveVaultKey, encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../lib/crypto';
-import { logout, forceLogout } from '../lib/authService';
+import { supabase } from '../../lib/supabase';
+import { auth } from '../../data/auth';
+import { store } from '../../data/store';
+import {
+  deriveVaultKey,
+  encryptPasswordWithVaultKey,
+  decryptPasswordWithVaultKey,
+  decryptPasswordLegacy,
+  clearSensitiveData,
+} from '../../lib/crypto';
+import { logout, forceLogout } from '../../lib/authService';
 
-import sidebar from '../components/sidebar/sidebar.vue';
-import modal from '../components/modal/modal.vue';
+import sidebar from '../../components/sidebar/sidebar.vue';
+import modal from '../../components/modal/modal.vue';
 
 export default {
   name: 'Vault',
@@ -228,6 +235,15 @@ export default {
       };
 
       this.store.modals.newAccount.open = false;
+    },
+    handleAccount(account) {
+      const ACCOUNT_ID = account.id;
+
+      if (!ACCOUNT_ID) {
+        return;
+      }
+
+      this.$router.push({ name: 'edit-vault', params: { id: ACCOUNT_ID } });
     },
 
     async loadAccounts() {

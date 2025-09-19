@@ -19,16 +19,16 @@ const routes = [
 
   // General
   {
-    path: '/',
-    name: 'home',
-    component: () => import('../views/Home.vue'),
-    props: true,
-    meta: { title: 'Keyp • Home' },
-  },
-  {
     path: '/vault',
     name: 'vault',
-    component: () => import('../views/Vault.vue'),
+    component: () => import('../views/Vault/Vault.vue'),
+    props: true,
+    meta: { title: 'Keyp • Vault' },
+  },
+  {
+    path: '/edit-vault/:id',
+    name: 'edit-vault',
+    component: () => import('../views/Vault/Vault-edit.vue'),
     props: true,
     meta: { title: 'Keyp • Vault' },
   },
