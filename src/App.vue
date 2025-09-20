@@ -25,6 +25,7 @@ export default {
   methods: {
     async getUser() {
       try {
+        console.log('test');
         const { data, error } = await supabase.auth.getUser();
 
         if (!error) {
