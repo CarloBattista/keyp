@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.13",
     "crypto-js": "^4.2.0",
     "hash-wasm": "^4.12.0",
+    "idle-timeout": "^2.1.1",
     "lucide-vue-next": "^0.544.0",
     "tailwindcss": "^4.1.13",
     "vue": "^3.5.21",

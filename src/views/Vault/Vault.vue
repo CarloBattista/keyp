@@ -187,9 +187,6 @@ export default {
         throw new Error('Vault non sbloccato. Effettua nuovamente il login.');
       }
 
-      // Aggiorna l'attività per il timer di auto-lock
-      this.store.updateActivity();
-
       return this.store.security.vaultKey;
     },
 

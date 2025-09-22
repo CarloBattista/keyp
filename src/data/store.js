@@ -57,7 +57,8 @@ export const store = reactive({
     return false;
   },
   startAutoLockTimer() {
-    // Auto-lock dopo 15 minuti di inattività
+    // Timer rimosso - idle-timeout gestisce l'inattività globalmente
+    // Manteniamo solo il timer di auto-lock del vault (5 minuti)
     if (this.security.autoLockTimer) {
       clearTimeout(this.security.autoLockTimer);
     }
@@ -65,14 +66,8 @@ export const store = reactive({
       () => {
         this.lockVault();
       },
-      15 * 60 * 1000
-    ); // 15 minuti
-  },
-  updateActivity() {
-    this.security.lastActivity = Date.now();
-    if (this.security.isUnlocked) {
-      this.startAutoLockTimer();
-    }
+      5 * 60 * 1000
+    ); // 5 minuti
   },
   init() {
     // Prova a ripristinare automaticamente la vault key al caricamento

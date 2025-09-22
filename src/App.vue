@@ -15,6 +15,7 @@ import { supabase } from './lib/supabase';
 import { auth } from './data/auth';
 import { store } from './data/store';
 import { decryptAES } from './lib/crypto';
+import { SessionManager } from './lib/sessionManager';
 
 export default {
   name: 'App',
@@ -88,44 +89,22 @@ export default {
       try {
         const encryptedVaultKey = sessionStorage.getItem('encryptedVaultKey');
         if (!encryptedVaultKey) {
-          // Nessuna vaultKey salvata, redirect alla login
           this.$router.push({ name: 'signin' });
           return;
         }
 
         const vaultKey = await decryptAES(encryptedVaultKey, this.auth.session.access_token);
         this.store.unlockVault(vaultKey);
-      } catch (error) {
-        console.error('Errore ripristino vault:', error);
-        // In caso di errore, pulisci e vai alla login
-        sessionStorage.removeItem('encryptedVaultKey');
-        this.auth.logout();
+      } catch (e) {
+        console.error(e);
+        SessionManager.clearAllData();
         this.$router.push({ name: 'signin' });
       }
     },
   },
-  watch: {
-    'auth.user': {
-      handler(value) {
-        if (value) {
-          this.getSession();
-          this.getProfile();
-        }
-      },
-      deep: true,
-    },
-    'auth.session': {
-      handler(value) {
-        if (value?.access_token && this.auth.isAuthenticated) {
-          this.restoreVaultKey();
-        }
-      },
-      deep: true,
-    },
-  },
+  // Rimuovi i listener manuali - idle-vue li gestisce automaticamente
   async mounted() {
-    this.getUser();
-
+    await this.getUser();
     if (this.auth.isAuthenticated) {
       await this.restoreVaultKey();
     }

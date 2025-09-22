@@ -1,5 +1,20 @@
 <template>
   <form @submit.prevent class="max-w-sm mx-auto pt-24">
+    <!-- Messaggio di logout per inattività -->
+    <div v-if="showIdleLogoutMessage" class="mb-6 p-4 text-orange-800 bg-orange-100 border border-orange-300 rounded-lg">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+        <span class="font-medium">Sessione scaduta per inattività</span>
+      </div>
+      <p class="mt-1 text-sm">La tua sessione è stata terminata automaticamente dopo 15 minuti di inattività per motivi di sicurezza.</p>
+    </div>
+
     <div class="mb-5">
       <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Your email</label>
       <input
@@ -63,6 +78,7 @@ export default {
     return {
       auth,
       store,
+      showIdleLogoutMessage: false,
       user: {
         data: {
           email: 'carlobattista@gmail.com',
@@ -80,6 +96,9 @@ export default {
   },
   methods: {
     async actionSignin() {
+      // Nascondi il messaggio quando l'utente inizia a fare login
+      this.showIdleLogoutMessage = false;
+
       this.user.loading = true;
       this.user.error = null;
 
@@ -138,6 +157,15 @@ export default {
         this.user.loading = false;
       }
     },
+  },
+  mounted() {
+    // Controlla se il logout è avvenuto per inattività
+    const logoutReason = localStorage.getItem('logoutReason');
+    if (logoutReason === 'idle') {
+      this.showIdleLogoutMessage = true;
+      // Rimuovi il flag dopo averlo mostrato
+      localStorage.removeItem('logoutReason');
+    }
   },
 };
 </script>
