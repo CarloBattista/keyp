@@ -403,12 +403,6 @@ export default {
       // console.log('Vault restored from session:', restored);
     }
 
-    // Se autenticato ma vault bloccato, chiedi la password per sbloccare
-    if (this.auth.isAuthenticated && !this.store.security.isUnlocked) {
-      // console.log('User authenticated but vault locked - prompting for password');
-      await this.promptForVaultUnlock();
-    }
-
     // Carica gli account solo se sbloccato E profilo disponibile
     if (this.store.security.isUnlocked && this.auth.profile && this.auth.profile.id) {
       // console.log('Calling loadAccounts from mounted');

@@ -258,3 +258,100 @@ export async function verifyMasterPassword(masterPassword, vaultSalt, storedHash
     return false;
   }
 }
+
+/**
+ * Genera una Secret Key casuale nel formato A3-RQVMY5-5BBPMH-WGYHA-BTBBD-TMHPF-4KG8Z
+ * @returns {string} - Secret Key nel formato specificato
+ */
+export function generateSecretKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  // Definisce le lunghezze dei segmenti: 2-6-6-5-5-5-5
+  const segmentLengths = [2, 6, 6, 5, 5, 5, 5];
+  const segments = [];
+
+  // Genera ogni segmento
+  for (const length of segmentLengths) {
+    let segment = '';
+    for (let i = 0; i < length; i++) {
+      segment += chars[Math.floor(Math.random() * chars.length)];
+    }
+    segments.push(segment);
+  }
+
+  // Unisce i segmenti con trattini
+  return segments.join('-');
+}
+
+/**
+ * Genera un salt per la Secret Key
+ * @returns {string} - Salt casuale di 16 caratteri hex
+ */
+export function generateSecretKeySalt() {
+  return CryptoJS.lib.WordArray.random(16).toString();
+}
+
+/**
+ * Crea un hash della Secret Key con salt
+ * @param {string} secretKey - La Secret Key da hashare
+ * @param {string} salt - Il salt per l'hash
+ * @returns {string} - Hash della Secret Key
+ */
+export function hashSecretKey(secretKey, salt) {
+  return CryptoJS.SHA256(secretKey + salt).toString();
+}
+
+/**
+ * Verifica una Secret Key contro il suo hash
+ * @param {string} secretKey - La Secret Key da verificare
+ * @param {string} salt - Il salt usato per l'hash
+ * @param {string} hash - L'hash memorizzato
+ * @returns {boolean} - True se la Secret Key è corretta
+ */
+export function verifySecretKey(secretKey, salt, hash) {
+  return hashSecretKey(secretKey, salt) === hash;
+}
+
+/**
+ * Deriva la Vault Key combinando password, vault salt e secret key
+ * @param {string} password - La master password
+ * @param {string} vaultSalt - Il salt del vault
+ * @param {string} secretKey - La Secret Key
+ * @returns {string} - La Vault Key derivata
+ */
+export function deriveVaultKeyWithSecret(password, vaultSalt, secretKey) {
+  // Combina password e secret key
+  const combined = password + secretKey;
+
+  // Deriva la chiave usando SHA256 con il vault salt
+  return CryptoJS.SHA256(combined + vaultSalt).toString();
+}
+
+/**
+ * Versione asincrona per derivare la Vault Key con Secret Key usando Argon2
+ * @param {string} masterPassword - La master password
+ * @param {string} secretKey - La Secret Key
+ * @param {string} vaultSalt - Il salt del vault
+ * @returns {Promise<string>} - La Vault Key derivata
+ */
+export async function deriveVaultKeyWithSecretKey(masterPassword, secretKey, vaultSalt) {
+  try {
+    // Combina password e secret key
+    const combined = masterPassword + secretKey;
+
+    const hash = await argon2id({
+      password: combined,
+      salt: vaultSalt,
+      parallelism: 1,
+      iterations: 3,
+      memorySize: 65536, // 64MB
+      hashLength: 32,
+      outputType: 'hex',
+    });
+
+    return hash;
+  } catch (error) {
+    console.error('Errore durante la derivazione della vault key con secret:', error);
+    throw new Error('Impossibile derivare la vault key con secret key');
+  }
+}

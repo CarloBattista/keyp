@@ -41,9 +41,6 @@ export const store = reactive({
     this.security.isUnlocked = false;
     this.accounts.data = [];
 
-    // Rimuove la vault key dal sessionStorage
-    sessionStorage.removeItem('vaultKey');
-
     if (this.security.autoLockTimer) {
       clearTimeout(this.security.autoLockTimer);
       this.security.autoLockTimer = null;
@@ -54,20 +51,9 @@ export const store = reactive({
     this.security.isUnlocked = true;
     this.security.lastActivity = Date.now();
 
-    // Salva la vault key nel sessionStorage
-    sessionStorage.setItem('vaultKey', vaultKey);
-
     this.startAutoLockTimer();
   },
   restoreVaultFromSession() {
-    const storedVaultKey = sessionStorage.getItem('vaultKey');
-    if (storedVaultKey) {
-      this.security.vaultKey = storedVaultKey;
-      this.security.isUnlocked = true;
-      this.security.lastActivity = Date.now();
-      this.startAutoLockTimer();
-      return true;
-    }
     return false;
   },
   startAutoLockTimer() {

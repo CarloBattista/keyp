@@ -43,15 +43,39 @@
         required
       />
     </div>
+    
+    <!-- Modal per mostrare la Secret Key generata -->
+    <div v-if="showSecretKey" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold mb-4 text-red-600">⚠️ IMPORTANTE: Salva la tua Secret Key</h3>
+        <p class="mb-4 text-sm text-gray-600">Questa è la tua Secret Key. <strong>Salvala in un posto sicuro!</strong> Ti servirà per accedere al tuo vault.</p>
+        <div class="bg-gray-100 p-3 rounded border font-mono text-sm break-all mb-4">
+          {{ generatedSecretKey }}
+        </div>
+        <div class="flex items-center mb-4">
+          <input v-model="secretKeyConfirmed" type="checkbox" id="confirm" class="mr-2">
+          <label for="confirm" class="text-sm">Ho salvato la mia Secret Key in un posto sicuro</label>
+        </div>
+        <button 
+          @click="completeRegistration" 
+          :disabled="!secretKeyConfirmed"
+          class="w-full bg-blue-600 text-white py-2 px-4 rounded disabled:bg-gray-400"
+        >
+          Continua
+        </button>
+      </div>
+    </div>
+    
     <RouterLink to="/identity/signin" class="w-full mb-4 flex items-center justify-end text-blue-600 hover:underline"
       >Hai già un account? Accedi</RouterLink
     >
     <button
       @click="actionSignup"
       type="submit"
-      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      :disabled="user.loading"
+      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:bg-gray-400"
     >
-      Continua
+      {{ user.loading ? 'Registrazione...' : 'Continua' }}
     </button>
   </form>
 </template>
@@ -59,13 +83,17 @@
 <script>
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
-import { generateVaultSalt } from '../../lib/crypto';
+import { generateVaultSalt, generateSecretKey, generateSecretKeySalt, hashSecretKey } from '../../lib/crypto';
 
 export default {
   name: 'Signup',
   data() {
     return {
       auth,
+      showSecretKey: false,
+      generatedSecretKey: '',
+      secretKeyConfirmed: false,
+      tempUser: null,
 
       user: {
         data: {
@@ -95,16 +123,33 @@ export default {
         });
 
         if (!error) {
-          // console.log(data);
-          this.auth.user = data.user;
-          await this.createProfile(data.user);
-
-          this.$router.push({ name: 'signin' });
+          this.tempUser = data.user;
+          
+          // Genera la Secret Key
+          this.generatedSecretKey = generateSecretKey();
+          
+          // Mostra il modal con la Secret Key
+          this.showSecretKey = true;
         }
       } catch (e) {
         console.error(e);
       } finally {
         this.user.loading = false;
+      }
+    },
+    async completeRegistration() {
+      if (!this.secretKeyConfirmed || !this.tempUser) return;
+      
+      try {
+        this.auth.user = this.tempUser;
+        await this.createProfile(this.tempUser);
+        
+        // Nascondi il modal
+        this.showSecretKey = false;
+        
+        this.$router.push({ name: 'signin' });
+      } catch (e) {
+        console.error(e);
       }
     },
     async createProfile(user) {
@@ -114,16 +159,20 @@ export default {
 
       try {
         const vaultSalt = generateVaultSalt();
+        const secretKeySalt = generateSecretKeySalt();
+        const secretKeyHash = hashSecretKey(this.generatedSecretKey, secretKeySalt);
 
         const { error } = await supabase.from('profiles').insert({
           user_id: user.id,
           first_name: this.user.data.first_name,
           last_name: this.user.data.last_name,
           vault_salt: vaultSalt,
+          secret_key_hash: secretKeyHash,
+          secret_key_salt: secretKeySalt,
         });
 
         if (!error) {
-          // console.log(data);
+          console.log('✅ Profilo creato con Secret Key');
         }
       } catch (e) {
         console.error(e);
