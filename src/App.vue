@@ -14,7 +14,7 @@
 import { supabase } from './lib/supabase';
 import { auth } from './data/auth';
 import { store } from './data/store';
-import { deriveVaultKeyWithSecret } from './lib/crypto';
+import { decryptAES } from './lib/crypto';
 
 export default {
   name: 'App',
@@ -26,6 +26,16 @@ export default {
     };
   },
   methods: {
+    clearVaultData() {
+      sessionStorage.removeItem('encryptedVaultKey');
+      this.store.security.vaultKey = null;
+      this.store.security.isVaultUnlocked = false;
+      if (this.store.security.autoLockTimer) {
+        clearTimeout(this.store.security.autoLockTimer);
+        this.store.security.autoLockTimer = null;
+      }
+    },
+
     async getUser() {
       try {
         const { data, error } = await supabase.auth.getUser();
@@ -37,7 +47,8 @@ export default {
 
           localStorage.setItem('isAuthenticated', true);
 
-          this.getSession();
+          await this.getSession();
+          await this.getProfile();
         }
       } catch (e) {
         console.error(e);
@@ -63,47 +74,33 @@ export default {
 
         if (!error) {
           this.auth.profile = data;
-          
-          // Auto-ripristina vault se utente loggato ma vault bloccata
-          await this.autoRestoreVault();
         }
       } catch (e) {
         console.error(e);
       }
     },
-    async autoRestoreVault() {
-      // Se utente autenticato ma vault bloccata, prova a ripristinare
-      if (this.auth.isAuthenticated && !this.store.security.isVaultUnlocked && this.auth.profile) {
-        const tempPassword = sessionStorage.getItem('tempPassword');
-        const tempSecretKey = sessionStorage.getItem('tempSecretKey');
-        
-        if (tempPassword && tempSecretKey && this.auth.profile.vault_salt) {
-          try {
-            // Rigenera la vaultKey
-            const vaultKey = deriveVaultKeyWithSecret(
-              tempPassword, 
-              this.auth.profile.vault_salt, 
-              tempSecretKey
-            );
-            
-            // Sblocca il vault
-            this.store.security.vaultKey = vaultKey;
-            this.store.security.isVaultUnlocked = true;
-            this.store.security.lastActivity = Date.now();
-            this.store.startAutoLockTimer();
-            
-            // Pulisce le credenziali temporanee
-            sessionStorage.removeItem('tempPassword');
-            sessionStorage.removeItem('tempSecretKey');
-            
-            console.log('✅ VaultKey rigenerata automaticamente');
-          } catch (error) {
-            console.error('❌ Errore rigenerazione:', error);
-            sessionStorage.clear();
-            this.store.security.vaultKey = null;
-            this.store.security.isVaultUnlocked = false;
-          }
+    async restoreVaultKey() {
+      if (!this.auth.session?.access_token) {
+        this.$router.push({ name: 'signin' });
+        return;
+      }
+
+      try {
+        const encryptedVaultKey = sessionStorage.getItem('encryptedVaultKey');
+        if (!encryptedVaultKey) {
+          // Nessuna vaultKey salvata, redirect alla login
+          this.$router.push({ name: 'signin' });
+          return;
         }
+
+        const vaultKey = await decryptAES(encryptedVaultKey, this.auth.session.access_token);
+        this.store.unlockVault(vaultKey);
+      } catch (error) {
+        console.error('Errore ripristino vault:', error);
+        // In caso di errore, pulisci e vai alla login
+        sessionStorage.removeItem('encryptedVaultKey');
+        this.auth.logout();
+        this.$router.push({ name: 'signin' });
       }
     },
   },
@@ -117,9 +114,21 @@ export default {
       },
       deep: true,
     },
+    'auth.session': {
+      handler(value) {
+        if (value?.access_token && this.auth.isAuthenticated) {
+          this.restoreVaultKey();
+        }
+      },
+      deep: true,
+    },
   },
-  mounted() {
+  async mounted() {
     this.getUser();
+
+    if (this.auth.isAuthenticated) {
+      await this.restoreVaultKey();
+    }
 
     window.addEventListener('load', () => {
       this.loading = false;

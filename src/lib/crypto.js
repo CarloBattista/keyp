@@ -355,3 +355,142 @@ export async function deriveVaultKeyWithSecretKey(masterPassword, secretKey, vau
     throw new Error('Impossibile derivare la vault key con secret key');
   }
 }
+
+/**
+ * Utility per WebCrypto API - Converte stringa in ArrayBuffer
+ */
+function stringToArrayBuffer(str) {
+  return new TextEncoder().encode(str);
+}
+
+/**
+ * Utility per WebCrypto API - Converte ArrayBuffer in stringa
+ */
+function arrayBufferToString(buffer) {
+  return new TextDecoder().decode(buffer);
+}
+
+/**
+ * Utility per WebCrypto API - Converte ArrayBuffer in Base64
+ */
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Utility per WebCrypto API - Converte Base64 in ArrayBuffer
+ */
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+/**
+ * Deriva una chiave AES da una stringa usando WebCrypto API
+ * @param {string} keyMaterial - Materiale per la chiave (es. access_token)
+ * @returns {Promise<CryptoKey>} - Chiave AES derivata
+ */
+export async function deriveAESKey(keyMaterial) {
+  const keyData = stringToArrayBuffer(keyMaterial);
+  
+  // Importa il materiale della chiave
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+  
+  // Deriva la chiave AES
+  const aesKey = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: stringToArrayBuffer('keyp-vault-salt'), // Salt fisso per consistenza
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    baseKey,
+    {
+      name: 'AES-GCM',
+      length: 256
+    },
+    false,
+    ['encrypt', 'decrypt']
+  );
+  
+  return aesKey;
+}
+
+/**
+ * Cifra un testo usando AES-GCM con WebCrypto API
+ * @param {string} plaintext - Testo da cifrare
+ * @param {string} keyMaterial - Materiale per la chiave
+ * @returns {Promise<string>} - Testo cifrato in Base64
+ */
+export async function encryptAES(plaintext, keyMaterial) {
+  try {
+    const key = await deriveAESKey(keyMaterial);
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV per GCM
+    const data = stringToArrayBuffer(plaintext);
+    
+    const encrypted = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      data
+    );
+    
+    // Combina IV + dati cifrati
+    const combined = new Uint8Array(iv.length + encrypted.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    
+    return arrayBufferToBase64(combined.buffer);
+  } catch (error) {
+    console.error('Errore cifratura AES:', error);
+    throw new Error('Impossibile cifrare i dati');
+  }
+}
+
+/**
+ * Decifra un testo usando AES-GCM con WebCrypto API
+ * @param {string} ciphertext - Testo cifrato in Base64
+ * @param {string} keyMaterial - Materiale per la chiave
+ * @returns {Promise<string>} - Testo decifrato
+ */
+export async function decryptAES(ciphertext, keyMaterial) {
+  try {
+    const key = await deriveAESKey(keyMaterial);
+    const combined = base64ToArrayBuffer(ciphertext);
+    
+    // Estrae IV (primi 12 bytes) e dati cifrati
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      encrypted
+    );
+    
+    return arrayBufferToString(decrypted);
+  } catch (error) {
+    console.error('Errore decifratura AES:', error);
+    throw new Error('Impossibile decifrare i dati');
+  }
+}

@@ -33,7 +33,7 @@
       />
     </div>
 
-    <div v-if="user.error.secretKey" class="mb-4 text-red-600 text-sm">
+    <div v-if="user.error?.secretKey" class="mb-4 text-red-600 text-sm">
       {{ user.error.secretKey }}
     </div>
 
@@ -52,10 +52,10 @@
 </template>
 
 <script>
+import { deriveVaultKeyWithSecret, verifySecretKey, encryptAES } from '../../lib/crypto';
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
-import { deriveVaultKeyWithSecret, verifySecretKey } from '../../lib/crypto';
 
 export default {
   name: 'Signin',
@@ -67,7 +67,7 @@ export default {
         data: {
           email: 'carlobattista@gmail.com',
           password: 'carlobattista',
-          secretKey: '',
+          secretKey: 'MC-5KV0QZ-OY4Y07-A52O1-UOU4B-OC39H-7HI3F',
         },
         error: {
           email: null,
@@ -81,59 +81,59 @@ export default {
   methods: {
     async actionSignin() {
       this.user.loading = true;
-      this.user.error.secretKey = null;
+      this.user.error = null;
 
       try {
-        // 1. Autentica con Supabase
+        // 1. Autenticazione con Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
           email: this.user.data.email,
           password: this.user.data.password,
         });
 
-        if (error) {
-          console.error('Errore login:', error);
-          return;
+        if (error) throw error;
+
+        // 2. Recupera il profilo utente
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('user_id', data.user.id).single();
+
+        if (profileError) throw profileError;
+
+        // 3. Verifica la secret key
+        const isValidSecret = verifySecretKey(this.user.data.secretKey, profile.secret_key_salt, profile.secret_key_hash);
+
+        if (!isValidSecret) {
+          throw new Error('Secret key non valida');
         }
 
-        // 2. Ottieni il profilo
-        const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', data.user.id).maybeSingle();
-
-        if (!profile) {
-          console.error('Profilo non trovato');
-          return;
-        }
-
-        // 3. Verifica la Secret Key
-        const isSecretKeyValid = verifySecretKey(this.user.data.secretKey, profile.secret_key_salt, profile.secret_key_hash);
-
-        if (!isSecretKeyValid) {
-          this.user.error.secretKey = 'Secret Key non valida';
-          return;
-        }
-
-        // 4. Deriva Vault Key
+        // 4. Deriva la vaultKey
         const vaultKey = deriveVaultKeyWithSecret(this.user.data.password, profile.vault_salt, this.user.data.secretKey);
 
-        // 6. Imposta auth e profilo
+        // 5. Cifra la vaultKey con l'access_token
+        const encryptedVaultKey = await encryptAES(vaultKey, data.session.access_token);
+
+        // 6. Salva la vaultKey cifrata in sessionStorage
+        sessionStorage.setItem('encryptedVaultKey', encryptedVaultKey);
+
+        // 7. Imposta auth e profilo
         this.auth.user = data.user;
         this.auth.session = data.session;
-        this.auth.profile = profile;
         this.auth.isAuthenticated = true;
+        this.auth.profile = profile;
 
-        // 7. Sblocca il vault con la vaultKey derivata
+        // 8. Sblocca il vault
         this.store.security.vaultKey = vaultKey;
-        this.store.security.isUnlocked = true;
+        this.store.security.isVaultUnlocked = true;
         this.store.security.lastActivity = Date.now();
         this.store.startAutoLockTimer();
 
-        // 8. Pulisce i dati sensibili dalla memoria
+        // 9. Pulisce i campi del form
         this.user.data.password = '';
         this.user.data.secretKey = '';
 
-        localStorage.setItem('isAuthenticated', true);
+        // 10. Redirect al vault
         this.$router.push({ name: 'vault' });
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error('Errore login:', error);
+        this.user.error = error.message;
       } finally {
         this.user.loading = false;
       }
