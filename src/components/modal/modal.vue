@@ -1,5 +1,5 @@
 <template>
-  <div @click="store.modals.newAccount.open = false" class="fixed z-[998] top-0 left-0 w-full h-svh">
+  <div @click="closeModal" class="fixed z-[998] top-0 left-0 w-full h-svh">
     <div class="relative w-full h-full bg-black opacity-70"></div>
   </div>
   <div
@@ -12,12 +12,13 @@
       <!-- Modal content -->
       <div class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700 pointer-events-auto">
         <!-- Modal header -->
-        <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Create New Account</h3>
+        <div v-if="header" class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ head }}</h3>
           <button
-            @click="store.modals.newAccount.open = false"
+            @click="closeModal"
+            v-if="closable"
             type="button"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
             data-modal-toggle="crud-modal"
           >
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
@@ -26,7 +27,12 @@
             <span class="sr-only">Close modal</span>
           </button>
         </div>
+        <!-- Modal Body -->
         <slot name="body" />
+        <!-- Modal Footer -->
+        <div v-if="footer" class="flex items-center justify-start p-4 md:p-5 border-t rounded-b dark:border-gray-600 border-gray-200">
+          <slot name="footer" />
+        </div>
       </div>
     </div>
   </div>
@@ -37,10 +43,33 @@ import { store } from '../../data/store';
 
 export default {
   name: 'modal',
+  props: {
+    modalKey: String,
+    header: {
+      type: Boolean,
+      default: true,
+    },
+    footer: {
+      type: Boolean,
+      default: true,
+    },
+    head: String,
+    closable: {
+      type: Boolean,
+      default: true,
+    },
+  },
   data() {
     return {
       store,
     };
+  },
+  methods: {
+    closeModal() {
+      if (this.modalKey) {
+        this.store.modals[this.modalKey].open = false;
+      }
+    },
   },
 };
 </script>
