@@ -24,7 +24,7 @@
                   readonly
                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded px-2 py-1 w-48"
                 />
-                <button @click.stop="togglePasswordVisibility(account, accountIndex)" class="text-gray-500 hover:text-gray-700">
+                <button @click.stop="togglePasswordVisibility(account, accountIndex)" class="text-gray-500 hover:text-gray-700 cursor-pointer">
                   <svg v-if="!account.showPassword" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                     <path
@@ -44,10 +44,28 @@
                     ></path>
                   </svg>
                 </button>
-                <button @click.stop="copyPasswordToClipboard(account, accountIndex)" class="text-gray-500 hover:text-gray-700" title="Copia password">
+                <button
+                  @click.stop="copyPasswordToClipboard(account, accountIndex)"
+                  class="text-gray-500 hover:text-gray-700 cursor-pointer"
+                  title="Copia password"
+                >
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path>
                     <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
+                  </svg>
+                </button>
+                <button
+                  @click.stop="deleteAccount(account, accountIndex)"
+                  class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 cursor-pointer"
+                  title="Elimina account"
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"></path>
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clip-rule="evenodd"
+                    ></path>
                   </svg>
                 </button>
               </div>
@@ -357,6 +375,26 @@ export default {
         }
       }
     },
+    async deleteAccount(account, accountIndex) {
+      const confirmMessage = `Sei sicuro di voler eliminare l'account "${account.name}"?\n\nQuesta azione è irreversibile.`;
+
+      if (!confirm(confirmMessage)) {
+        return; // L'utente ha annullato
+      }
+
+      try {
+        const { error } = await supabase.from('vault_entries').delete().eq('id', account.id).eq('profile_id', this.auth.profile.id);
+
+        if (!error) {
+          // Pulisci eventuali dati sensibili prima di rimuovere
+          this.clearAccountSensitiveData(account, accountIndex);
+          await this.loadAccounts();
+        }
+      } catch (e) {
+        console.error(e);
+        console.log('Errore durante');
+      }
+    },
   },
   watch: {
     'store.security.isUnlocked': {
@@ -379,7 +417,7 @@ export default {
     }
 
     // Carica gli account solo se sbloccato E profilo disponibile
-    if (this.store.security.isUnlocked || this.auth.profile) {
+    if (this.store.security.isUnlocked && this.auth.profile) {
       // console.log('✅ Calling loadAccounts from mounted');
       await this.loadAccounts();
     } else {
