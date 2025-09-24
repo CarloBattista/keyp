@@ -1,69 +1,20 @@
 <template>
-  <form @submit.prevent class="max-w-sm mx-auto pt-24">
-    <!-- Messaggio di logout per inattività -->
-    <div v-if="showIdleLogoutMessage" class="mb-6 p-4 text-orange-800 bg-orange-100 border border-orange-300 rounded-lg">
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        <span class="font-medium">Sessione scaduta per inattività</span>
+  <div class="w-full h-12 flex items-center justify-start"></div>
+  <div class="relative w-full">
+    <div class="relative pt-6 max-w-[420px] mx-auto px-4 flex flex-col">
+      <h1 class="text-[#222] text-3xl font-semibold text-center mb-8">Sign in to Keyp</h1>
+      <!-- <p class="w-full h-14 text-sm font-normal text-center flex items-center justify-center">or</p> -->
+      <form @submit.prevent class="w-full flex flex-col gap-4">
+        <kyInput v-model="user.data.email" type="email" label="Email address" forLabel="email_address" />
+        <kyInput v-model="user.data.password" type="password" label="Password" forLabel="password" />
+        <kyInput v-model="user.data.secretKey" type="text" label="Secret key" forLabel="secret_key" />
+      </form>
+      <div class="w-full mt-4 text-sm text-center flex flex-col gap-4 items-center justify-center">
+        <RouterLink to="">Reset Password</RouterLink>
+        <p>No account? <RouterLink to="">Create one</RouterLink></p>
       </div>
-      <p class="mt-1 text-sm">La tua sessione è stata terminata automaticamente dopo 15 minuti di inattività per motivi di sicurezza.</p>
     </div>
-
-    <div class="mb-5">
-      <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Your email</label>
-      <input
-        v-model="user.data.email"
-        type="email"
-        id="email"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="name@flowbite.com"
-        required
-      />
-    </div>
-    <div class="mb-5">
-      <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Your password</label>
-      <input
-        v-model="user.data.password"
-        type="password"
-        id="password"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        required
-      />
-    </div>
-    <div class="mb-1">
-      <label for="secretKey" class="block mb-2 text-sm font-medium text-gray-900">Your Secret Key</label>
-      <input
-        v-model="user.data.secretKey"
-        type="password"
-        id="secretKey"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="Inserisci la tua Secret Key"
-        required
-      />
-    </div>
-
-    <div v-if="user.error?.secretKey" class="mb-4 text-red-600 text-sm">
-      {{ user.error.secretKey }}
-    </div>
-
-    <RouterLink to="/identity/signup" class="w-full mb-4 flex items-center justify-end text-blue-600 hover:underline"
-      >Non hai ancora un account? Registrati</RouterLink
-    >
-    <button
-      @click="actionSignin"
-      type="submit"
-      :disabled="user.loading"
-      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:bg-gray-400"
-    >
-      {{ user.loading ? 'Accesso...' : 'Accedi' }}
-    </button>
-  </form>
+  </div>
 </template>
 
 <script>
@@ -72,8 +23,14 @@ import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
 
+// COMPONENTS
+import kyInput from '../../components/input/ky-input.vue';
+
 export default {
   name: 'Signin',
+  components: {
+    kyInput,
+  },
   data() {
     return {
       auth,
