@@ -9,7 +9,7 @@
       </div>
       <div class="w-full mt-4 flex flex-col gap-2">
         <RouterLink to="/vault" class="nav-item">🔐 Vault</RouterLink>
-        <RouterLink to="/settings" class="nav-item">⚙️ Settings</RouterLink>
+        <RouterLink to="/vault" class="nav-item">⚙️ Settings</RouterLink>
       </div>
     </nav>
   </div>

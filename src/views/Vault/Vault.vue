@@ -158,13 +158,7 @@
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
-import {
-  deriveVaultKey,
-  encryptPasswordWithVaultKey,
-  decryptPasswordWithVaultKey,
-  decryptPasswordLegacy,
-  clearSensitiveData,
-} from '../../lib/crypto';
+import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../../lib/crypto';
 import { logout, forceLogout } from '../../lib/authService';
 
 import sidebar from '../../components/sidebar/sidebar.vue';
@@ -281,6 +275,7 @@ export default {
 
         if (!error) {
           await this.loadAccounts();
+          this.store.modals.newAccount.open = false;
         }
       } catch (e) {
         console.error(e);
@@ -367,63 +362,31 @@ export default {
     },
   },
   watch: {
-    'auth.profile': {
+    'store.security.isUnlocked': {
       handler(value) {
-        if (value && this.store.security.isUnlocked) {
+        if (value && this.auth.profile) {
+          // console.log('✅ Calling loadAccounts from unlock watcher');
           this.loadAccounts();
+        } else {
+          // console.log('❌ Not calling loadAccounts from unlock watcher');
         }
       },
-      deep: true,
     },
   },
   async mounted() {
-    // console.log('Vault mounted - isUnlocked:', this.store.security.isUnlocked);
-    // console.log('Auth isAuthenticated:', this.auth.isAuthenticated);
-
     // Prova a ripristinare dal sessionStorage
     if (!this.store.security.isUnlocked && this.auth.isAuthenticated) {
-      // console.log('Trying to restore vault from sessionStorage...');
+      // console.log('🔄 Trying to restore vault from sessionStorage...');
       this.store.restoreVaultFromSession();
-      // console.log('Vault restored from session:', restored);
+      // console.log('- store.security.isUnlocked after restore:', this.store.security.isUnlocked);
     }
 
     // Carica gli account solo se sbloccato E profilo disponibile
-    if (this.store.security.isUnlocked && this.auth.profile && this.auth.profile.id) {
-      // console.log('Calling loadAccounts from mounted');
+    if (this.store.security.isUnlocked || this.auth.profile) {
+      // console.log('✅ Calling loadAccounts from mounted');
       await this.loadAccounts();
     } else {
-      // console.log('Vault locked or profile not available, not loading accounts');
-    }
-  },
-
-  // Aggiungi questo nuovo metodo
-  async promptForVaultUnlock() {
-    const password = prompt('Inserisci la tua password per sbloccare il vault:');
-
-    if (password) {
-      try {
-        // Deriva la vaultKey dalla password inserita
-        const vaultKey = await deriveVaultKey(password, this.auth.profile.vault_salt);
-
-        // Sblocca il vault
-        this.store.unlockVault(vaultKey);
-
-        // console.log('Vault unlocked successfully');
-
-        // Carica gli account
-        if (this.auth.profile && this.auth.profile.id) {
-          await this.loadAccounts();
-        }
-      } catch (error) {
-        console.error(error);
-        alert('Password non corretta o errore nello sblocco del vault.');
-
-        // Logout se non riesce a sbloccare
-        this.$router.push({ name: 'signin' });
-      }
-    } else {
-      // Se annulla, torna al login
-      this.$router.push({ name: 'signin' });
+      // console.log('❌ Not calling loadAccounts:');
     }
   },
   beforeUnmount() {

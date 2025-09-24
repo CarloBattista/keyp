@@ -6,7 +6,7 @@
     id="crud-modal"
     tabindex="-1"
     aria-hidden="true"
-    class="fixed z-[999] overflow-y-auto overflow-x-hidden top-0 right-0 left-0 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full pointer-events-none"
+    class="fixed z-[999] top-0 right-0 left-0 overflow-y-auto overflow-x-hidden flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full pointer-events-none"
   >
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->

@@ -102,9 +102,9 @@ export default {
       }
     },
   },
-  // Rimuovi i listener manuali - idle-vue li gestisce automaticamente
   async mounted() {
     await this.getUser();
+
     if (this.auth.isAuthenticated) {
       await this.restoreVaultKey();
     }
