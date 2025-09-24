@@ -1,44 +1,46 @@
 <template>
-  <div
-    @click="focusInput"
-    class="field-container relative w-full flex flex-col gap-2"
-    :class="{ focus: focus, active: modelValue.length > 0, error: error, disabled: disabled }"
-  >
-    <label v-if="label" :for="forLabel" class="input-label">{{ label }} <span v-if="required">*</span></label>
+  <div>
     <div
-      @focus="handleFocus"
-      @blur="handleBlur"
-      class="input-container relative w-full h-13 max-h-13 px-4 pt-4 rounded-lg flex gap-2 items-center justify-start border border-solid"
+      @click="focusInput"
+      class="field-container relative w-full flex flex-col gap-2"
+      :class="{ focus: focus, active: modelValue.length > 0, error: error, disabled: disabled, 'without-label': !label }"
     >
-      <div v-if="icon" class="input-icon h-full flex items-center justify-center opacity-50 pointer-events-none">
-        <component :is="icon" size="18" />
-      </div>
-      <input
-        ref="inputElement"
+      <label v-if="label" :for="forLabel" class="input-label">{{ label }} <span v-if="required">*</span></label>
+      <div
         @focus="handleFocus"
         @blur="handleBlur"
-        @input="updateValue"
-        :value="modelValue"
-        :id="forLabel"
-        :type="inputType"
-        :placeholder="placeholder"
-        :readonly="readOnly"
-        :required="required"
-        :disabled="disabled"
-        class="w-full h-full outline-0"
-      />
-      <div
-        v-if="type === 'password'"
-        @click="toggleShowPassword"
-        class="absolute top-0 right-4 h-full flex items-center justify-center cursor-pointer"
+        class="input-container relative w-full h-13 max-h-13 px-4 rounded-lg flex gap-2 items-center justify-start border border-solid"
       >
-        <transition name="eye-fade" mode="out-in">
-          <Eye v-if="!showPassword" key="eye-closed" size="20" />
-          <EyeClosed v-else key="eye-open" size="20" />
-        </transition>
+        <div v-if="icon" class="input-icon h-full flex items-center justify-center opacity-50 pointer-events-none">
+          <component :is="icon" size="18" />
+        </div>
+        <input
+          ref="inputElement"
+          @focus="handleFocus"
+          @blur="handleBlur"
+          @input="updateValue"
+          :value="modelValue"
+          :id="forLabel"
+          :type="inputType"
+          :placeholder="placeholder"
+          :readonly="readOnly"
+          :required="required"
+          :disabled="disabled"
+          class="w-full h-full outline-0"
+        />
+        <div
+          v-if="type === 'password'"
+          @click="toggleShowPassword"
+          class="absolute top-0 right-4 h-full flex items-center justify-center cursor-pointer"
+        >
+          <transition name="eye-fade" mode="out-in">
+            <Eye v-if="!showPassword" key="eye-closed" size="20" />
+            <EyeClosed v-else key="eye-open" size="20" />
+          </transition>
+        </div>
       </div>
     </div>
-    <div v-if="error" class="input-error relative w-full flex gap-2 items-center">
+    <div v-if="error" class="input-error relative mt-2 w-full flex gap-2 items-center">
       <p class="text-[#e50914] text-xs font-medium">{{ error }}</p>
     </div>
   </div>
@@ -101,7 +103,7 @@ export default {
       this.$emit('update:modelValue', event.target.value);
     },
     focusInput() {
-      if (!this.disabled && this.$refs.inputElement) {
+      if (!this.disabled && !this.readOnly && this.$refs.inputElement) {
         this.$refs.inputElement.focus();
       }
     },
@@ -123,6 +125,7 @@ export default {
   background-color: white;
   color: black;
   border-color: rgba(0, 0, 0, 0.2);
+  padding-top: 1rem;
   outline-color: transparent;
   cursor: text;
 
@@ -131,11 +134,19 @@ export default {
   transition-timing-function: ease; */
 }
 
+.input-container input:read-only {
+  cursor: default !important;
+}
+
 .field-container.focus .input-container {
   border-color: black;
   outline-color: black;
   outline-width: 1px;
   outline-style: solid;
+}
+
+.field-container.without-label .input-container {
+  padding-top: 0;
 }
 
 .input-label {
