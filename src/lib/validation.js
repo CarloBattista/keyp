@@ -4,6 +4,9 @@ export const VALIDATION_PATTERNS = {
   password: {
     minLength: 6,
   },
+  name: {
+    minLength: 2,
+  },
 };
 
 // Messaggi di errore standardizzati
@@ -13,11 +16,20 @@ export const ERROR_MESSAGES = {
     invalid: 'Formato email non valido',
     notConfirmed: 'Email non confermata. Controlla la tua casella di posta',
     notFound: 'Account non trovato o non configurato correttamente',
+    alreadyExists: 'Email già registrata',
   },
   password: {
     required: 'Campo obbligatorio',
     minLength: 'La password deve essere di almeno 6 caratteri',
     invalid: 'Email o password non corretti',
+  },
+  firstName: {
+    required: 'Campo obbligatorio',
+    minLength: 'Il nome deve essere di almeno 2 caratteri',
+  },
+  lastName: {
+    required: 'Campo obbligatorio',
+    minLength: 'Il cognome deve essere di almeno 2 caratteri',
   },
   secretKey: {
     required: 'Campo obbligatorio',
@@ -25,9 +37,9 @@ export const ERROR_MESSAGES = {
   },
   network: {
     connection: 'Errore di connessione. Controlla la tua connessione internet',
-    tooManyRequests: 'Troppi tentativi di login. Riprova più tardi',
+    tooManyRequests: 'Troppi tentativi. Riprova più tardi',
   },
-  generic: 'Errore durante il login. Riprova',
+  generic: 'Errore durante la registrazione. Riprova',
 };
 
 // Funzioni di validazione individuali
@@ -44,14 +56,25 @@ export const validators = {
     return null;
   },
 
+  firstName: (firstName) => {
+    if (!firstName) return ERROR_MESSAGES.firstName.required;
+    if (firstName.trim().length < VALIDATION_PATTERNS.name.minLength) return ERROR_MESSAGES.firstName.minLength;
+    return null;
+  },
+
+  lastName: (lastName) => {
+    if (!lastName) return ERROR_MESSAGES.lastName.required;
+    if (lastName.trim().length < VALIDATION_PATTERNS.name.minLength) return ERROR_MESSAGES.lastName.minLength;
+    return null;
+  },
+
   secretKey: (secretKey) => {
     if (!secretKey) return ERROR_MESSAGES.secretKey.required;
-    // if (!VALIDATION_PATTERNS.secretKey.test(secretKey)) return ERROR_MESSAGES.secretKey.invalid;
     return null;
   },
 };
 
-// Funzione principale di validazione del form
+// Funzione principale di validazione del form di login
 export function validateSigninForm(formData) {
   const errors = {
     email: null,
@@ -63,6 +86,30 @@ export function validateSigninForm(formData) {
   errors.email = validators.email(formData.email);
   errors.password = validators.password(formData.password);
   errors.secretKey = validators.secretKey(formData.secretKey);
+
+  // Controlla se ci sono errori
+  const hasErrors = Object.values(errors).some((error) => error !== null);
+
+  return {
+    isValid: !hasErrors,
+    errors,
+  };
+}
+
+// Funzione principale di validazione del form di registrazione
+export function validateSignupForm(formData) {
+  const errors = {
+    first_name: null,
+    last_name: null,
+    email: null,
+    password: null,
+  };
+
+  // Validazione di tutti i campi
+  errors.first_name = validators.firstName(formData.first_name);
+  errors.last_name = validators.lastName(formData.last_name);
+  errors.email = validators.email(formData.email);
+  errors.password = validators.password(formData.password);
 
   // Controlla se ci sono errori
   const hasErrors = Object.values(errors).some((error) => error !== null);
@@ -127,6 +174,51 @@ export function handleAuthErrors(error) {
   // Gestione errori del profilo
   if (errorMessage.includes('Profile not found')) {
     errors.email = ERROR_MESSAGES.email.notFound;
+    return errors;
+  }
+
+  // Errore generico se non rientra in nessuna categoria specifica
+  errors.email = ERROR_MESSAGES.generic;
+  return errors;
+}
+
+// Funzione per gestire gli errori specifici di registrazione
+export function handleSignupErrors(error) {
+  const errors = {
+    first_name: null,
+    last_name: null,
+    email: null,
+    password: null,
+  };
+
+  const errorMessage = error.message || '';
+
+  // Gestione errori specifici di Supabase Auth per registrazione
+  if (errorMessage.includes('User already registered')) {
+    errors.email = ERROR_MESSAGES.email.alreadyExists;
+    return errors;
+  }
+
+  if (errorMessage.includes('Email rate limit exceeded')) {
+    errors.email = ERROR_MESSAGES.network.tooManyRequests;
+    return errors;
+  }
+
+  // Gestione errori di validazione email
+  if (errorMessage.includes('Unable to validate email address') || errorMessage.includes('Invalid email')) {
+    errors.email = ERROR_MESSAGES.email.invalid;
+    return errors;
+  }
+
+  // Gestione errori password
+  if (errorMessage.includes('Password should be at least')) {
+    errors.password = ERROR_MESSAGES.password.minLength;
+    return errors;
+  }
+
+  // Gestione errori di rete
+  if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network error')) {
+    errors.email = ERROR_MESSAGES.network.connection;
     return errors;
   }
 

@@ -16,6 +16,13 @@ const routes = [
     props: true,
     meta: { title: 'Keyp • Signin' },
   },
+  {
+    path: '/identity/verify',
+    name: 'verify',
+    component: () => import('../views/Onboarding/Verify.vue'),
+    props: true,
+    meta: { title: 'Keyp • Verify' },
+  },
 
   // General
   {

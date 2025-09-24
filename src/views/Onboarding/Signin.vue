@@ -98,6 +98,7 @@ export default {
       showIdleLogoutMessage: false,
       user: {
         data: {
+          id: null,
           email: 'carlobattista@gmail.com',
           password: 'carlobattista',
           secretKey: 'MC-5KV0QZ-OY4Y07-A52O1-UOU4B-OC39H-7HI3F',
@@ -118,10 +119,23 @@ export default {
       this.user.error = validation.errors;
       return validation.isValid;
     },
-    handleFormErrors(error) {
-      this.user.error = handleAuthErrors(error);
-    },
 
+    async handleFormErrors(error) {
+      this.user.error = handleAuthErrors(error);
+
+      if (error?.code === 'email_not_confirmed') {
+        try {
+          const { data, error } = await supabase.from('profiles').select('email').eq('email', this.user.data.email).single();
+
+          if (!error) {
+            console.log(data);
+            // this.$router.push({ name: 'verify' });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    },
     async actionSignin() {
       this.showIdleLogoutMessage = false;
 
@@ -181,9 +195,9 @@ export default {
 
         // 10. Redirect al vault
         this.$router.push({ name: 'vault' });
-      } catch (error) {
-        console.error('Errore login:', error);
-        this.handleFormErrors(error);
+      } catch (e) {
+        console.error(e);
+        this.handleFormErrors(e);
       } finally {
         this.user.loading = false;
       }

@@ -159,7 +159,6 @@ import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
 import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../../lib/crypto';
-import { logout, forceLogout } from '../../lib/authService';
 
 import sidebar from '../../components/sidebar/sidebar.vue';
 import modal from '../../components/modal/modal.vue';
@@ -291,6 +290,10 @@ export default {
       }
     },
     async togglePasswordVisibility(account, index) {
+      if (!this.store.security.isUnlocked && !this.store.security.vaultKey) {
+        return;
+      }
+
       if (account.showPassword) {
         // Nasconde la password e pulisce i dati sensibili
         this.clearAccountSensitiveData(account, index);
@@ -314,18 +317,12 @@ export default {
           account.tempDecryptedPassword = decryptedPassword;
           account.showPassword = true;
 
+          const timeoutShowPassword = 15000; // 15 secondi
+
           // Imposta un timer per nascondere automaticamente la password dopo 30 secondi
-          this.setSensitiveDataTimer(account, index, 30000);
-        } catch (error) {
-          // console.error('Errore nella decrittografia:', error);
-          await logout();
-          forceLogout();
-          if (error.message.includes('Vault non sbloccato')) {
-            // alert('Sessione scaduta. Effettua nuovamente il login.');
-            this.$router.push({ name: 'signin' });
-          } else {
-            // alert('Errore nella decrittografia.');
-          }
+          this.setSensitiveDataTimer(account, index, timeoutShowPassword);
+        } catch (e) {
+          console.error(e);
         }
       }
     },
