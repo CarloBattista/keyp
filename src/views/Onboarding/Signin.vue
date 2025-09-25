@@ -3,7 +3,14 @@
   <div class="relative w-full">
     <div class="relative pt-6 max-w-[420px] mx-auto px-4 flex flex-col">
       <h1 class="text-[#222] text-3xl font-semibold text-center mb-8">Sign in to Keyp</h1>
-      <kyButton v-if="user.access_with_google" type="submit" variant="secondary" :leftIcon="true" label="Continue with Google">
+      <kyButton
+        v-if="user.access_with_google"
+        @click="actionSigninWithGoogle"
+        type="submit"
+        variant="secondary"
+        :leftIcon="true"
+        label="Continue with Google"
+      >
         <template #leftIconCustom>
           <svg class="svg" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
             <path
@@ -108,7 +115,7 @@ export default {
           password: null,
           secretKey: null,
         },
-        access_with_google: true,
+        access_with_google: false,
         loading: false,
       },
     };
@@ -199,6 +206,70 @@ export default {
       } catch (e) {
         console.error(e);
         this.handleFormErrors(e);
+      } finally {
+        this.user.loading = false;
+      }
+    },
+    async actionSigninWithGoogle() {
+      if (!this.user.access_with_google) {
+        return;
+      }
+
+      this.user.loading = true;
+
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/vault`,
+          },
+        });
+
+        if (error) throw error;
+
+        // 2. Recupera il profilo utente
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('user_id', data.user.id).single();
+
+        if (profileError) throw profileError;
+
+        // 3. Verifica la secret key
+        const isValidSecret = verifySecretKey(this.user.data.secretKey, profile.secret_key_salt, profile.secret_key_hash);
+
+        if (!isValidSecret) {
+          throw new Error('Secret key non valida');
+        }
+
+        // 4. Deriva la vaultKey
+        const vaultKey = deriveVaultKeyWithSecret(this.user.data.password, profile.vault_salt, this.user.data.secretKey);
+
+        // 5. Cifra la vaultKey con l'access_token
+        const encryptedVaultKey = await encryptAES(vaultKey, data.session.access_token);
+
+        // 6. Salva la vaultKey cifrata in sessionStorage
+        sessionStorage.setItem('encryptedVaultKey', encryptedVaultKey);
+
+        // 7. Imposta auth e profilo
+        this.auth.user = data.user;
+        this.auth.session = data.session;
+        this.auth.isAuthenticated = true;
+        this.auth.profile = profile;
+        localStorage.setItem('isAuthenticated', true);
+
+        // 8. Sblocca il vault
+        this.store.security.vaultKey = vaultKey;
+        this.store.security.isUnlocked = true;
+        this.store.security.lastActivity = Date.now();
+        this.store.startAutoLockTimer();
+
+        // 9. Pulisce i campi del form
+        this.user.data.email = '';
+        this.user.data.password = '';
+        this.user.data.secretKey = '';
+
+        // 10. Redirect al vault
+        this.$router.push({ name: 'vault' });
+      } catch (e) {
+        console.error(e);
       } finally {
         this.user.loading = false;
       }

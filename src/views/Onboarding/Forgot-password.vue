@@ -46,7 +46,7 @@ export default {
       auth,
       user: {
         data: {
-          email: 'carlobattista@gmail.com',
+          email: '',
         },
         error: {
           email: null,

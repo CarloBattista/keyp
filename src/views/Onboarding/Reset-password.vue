@@ -51,8 +51,8 @@ export default {
       store,
       user: {
         data: {
-          password: 'carlobattista',
-          confirm_password: 'carlobattista',
+          password: '',
+          confirm_password: '',
         },
         error: {
           password: null,

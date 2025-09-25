@@ -2,24 +2,31 @@
   <button
     :type="type"
     :disabled="disabled"
-    class="ky-btn min-h-9 max-h-14 rounded-lg relative flex gap-2 items-center justify-center"
+    class="ky-btn min-h-9 max-h-14 px-4 rounded-lg relative flex gap-2 items-center justify-center"
     :class="['size-' + size, 'variant-' + variant, { loading: loading }]"
   >
     <div v-if="!loading && leftIcon" class="h-full flex items-center justify-center">
-      <component :is="leftIcon" />
+      <component :is="leftIcon" size="20" />
       <slot name="leftIconCustom" />
     </div>
     <span v-if="loading" class="loader"></span>
     <span v-if="!loading && label" class="label-btn font-medium">{{ label }}</span>
     <div v-if="!loading && rightIcon" class="h-full flex items-center justify-center">
-      <component :is="rightIcon" />
+      <component :is="rightIcon" size="20" />
     </div>
   </button>
 </template>
 
 <script>
+// ICONS
+import { Download } from 'lucide-vue-next';
+
 export default {
   name: 'ky-button',
+  components: {
+    // ICONS
+    Download,
+  },
   props: {
     type: {
       type: String,
@@ -111,7 +118,7 @@ export default {
 }
 
 .ky-btn.variant-secondary {
-  background-color: white;
+  background-color: transparent;
   border-color: black;
   color: black;
 }

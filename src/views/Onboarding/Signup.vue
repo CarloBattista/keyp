@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-12 flex items-center justify-start"></div>
-  <div class="relative w-full">
+  <div v-if="!showSecretKey" class="relative w-full">
     <div class="relative pt-6 max-w-[420px] mx-auto px-4 flex flex-col">
       <h1 class="text-[#222] text-3xl font-semibold text-center mb-8">Welcome to Keyp</h1>
       <form @submit.prevent class="w-full flex flex-col gap-4">
@@ -45,19 +45,34 @@
       </div>
     </div>
   </div>
-
-  <div v-if="showSecretKey" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold mb-4 text-red-600">⚠️ IMPORTANTE: Salva la tua Secret Key</h3>
-      <p class="mb-4 text-sm text-gray-600">
-        Questa è la tua Secret Key. <strong>Salvala in un posto sicuro!</strong> Ti servirà per accedere al tuo vault.
+  <div v-else-if="showSecretKey" class="relative w-full pt-24 px-4">
+    <div class="max-w-[420px] mx-auto p-6 rounded-lg flex flex-col gap-6 shadow-2xl shadow-black/20 border border-solid border-black/10 bg-white">
+      <h3 class="text-[#222] text-3xl font-semibold text-center">Ottieni la tua Secret Key univoca</h3>
+      <p class="text-[#222] text-base font-normal text-center">
+        La Secret Key è generata dal tuo stesso dispositivo. È solo tua, non condividerla mai.
       </p>
-      <kyInput v-model="generatedSecretKey" type="text" forLabel="secret_key" :readOnly="true" class="mb-4" />
-      <div class="flex items-center mb-4">
-        <input v-model="secretKeyConfirmed" type="checkbox" id="confirm" class="mr-2" />
-        <label for="confirm" class="text-sm">Ho salvato la mia Secret Key in un posto sicuro</label>
+      <kyButton @click="generateSecretKey" type="button" label="Genera la Secret Key" class="w-full" />
+    </div>
+  </div>
+  <div v-if="generatedSecretKey" class="fixed top-0 left-0 w-full h-svh px-4 flex items-center justify-center bg-black/70">
+    <div class="max-w-[420px] mx-auto p-6 rounded-lg flex flex-col gap-4 shadow-2xl shadow-black/20 border border-solid border-black/10 bg-white">
+      <h3 class="text-[#222] text-2xl font-semibold text-center">Salva in backup la Secret Key per non perdere mai l’accesso</h3>
+      <div class="w-full flex flex-col gap-2 items-center py-4 px-6 rounded-lg border border-dashed border-blue-200 bg-blue-200/30">
+        <p class="text-[#222] text-xl font-semibold text-center">A3-6CV6TP •••••• ••••• ••••• ••••• •••••</p>
+        <kyButton type="button" size="small" variant="secondary" leftIcon="Download" label="Salva il PDF" class="w-fit" />
       </div>
-      <kyButton @click="completeRegistration" type="button" label="Continue" :disabled="!secretKeyConfirmed" class="w-full" />
+      <div class="w-full flex flex-col gap-2 items-center py-4 px-6 rounded-lg border border-solid border-orange-200 bg-orange-200/20">
+        <p class="text-[#222] text-sm font-normal">
+          Non teniamo registrata la tua Secret Key e non siamo in grado di recuperarla. Tienila sempre a portata.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <input v-model="secretKeyConfirmed" type="checkbox" id="confirm" class="mr-2" />
+          <label for="confirm" class="text-[#222] text-sm font-normal">Sono sicuro di aver salvato la Secret Key</label>
+        </div>
+        <kyButton @click="completeRegistration" type="button" label="Continua" :disabled="!secretKeyConfirmed" class="w-full" />
+      </div>
     </div>
   </div>
 </template>
@@ -82,16 +97,16 @@ export default {
     return {
       auth,
       showSecretKey: false,
-      generatedSecretKey: 'MC-5KV0QZ-OY4Y07-A52O1-UOU4B-OC39H-7HI3F',
+      generatedSecretKey: '',
       secretKeyConfirmed: false,
       tempUser: null,
 
       user: {
         data: {
-          first_name: 'Carlo',
-          last_name: 'Battista',
-          email: 'carlobattista@gmail.com',
-          password: 'carlobattista',
+          first_name: '',
+          last_name: '',
+          email: '',
+          password: '',
         },
         error: {
           first_name: null,
@@ -112,6 +127,9 @@ export default {
 
     handleFormErrors(error) {
       this.user.error = handleSignupErrors(error);
+    },
+    generateSecretKey() {
+      this.generatedSecretKey = generateSecretKey();
     },
 
     async actionSignup() {
@@ -137,9 +155,6 @@ export default {
 
         if (!error) {
           this.tempUser = data.user;
-
-          // Genera la Secret Key
-          this.generatedSecretKey = generateSecretKey();
           this.showSecretKey = true;
         }
       } catch (e) {
