@@ -23,6 +23,20 @@ const routes = [
     props: true,
     meta: { title: 'Keyp • Verify' },
   },
+  {
+    path: '/identity/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/Onboarding/Forgot-password.vue'),
+    props: true,
+    meta: { title: 'Keyp • Forgot Password' },
+  },
+  {
+    path: '/identity/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/Onboarding/Reset-password.vue'),
+    props: true,
+    meta: { title: 'Keyp • Reset Password' },
+  },
 
   // General
   {

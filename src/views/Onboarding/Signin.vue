@@ -67,7 +67,7 @@
         <kyButton @click="actionSignin" type="submit" label="Log in" :loading="user.loading" />
       </form>
       <div class="w-full mt-4 text-sm text-center flex flex-col gap-4 items-center justify-center">
-        <RouterLink to="" class="text-blue-500 hover:underline">Reset Password</RouterLink>
+        <RouterLink to="/identity/forgot-password" class="text-blue-500 hover:underline">Reset Password</RouterLink>
         <p>No account? <RouterLink to="/identity/signup" class="text-blue-500 hover:underline">Create one</RouterLink></p>
       </div>
     </div>
@@ -181,10 +181,11 @@ export default {
         this.auth.session = data.session;
         this.auth.isAuthenticated = true;
         this.auth.profile = profile;
+        localStorage.setItem('isAuthenticated', true);
 
         // 8. Sblocca il vault
         this.store.security.vaultKey = vaultKey;
-        this.store.security.isVaultUnlocked = true;
+        this.store.security.isUnlocked = true;
         this.store.security.lastActivity = Date.now();
         this.store.startAutoLockTimer();
 

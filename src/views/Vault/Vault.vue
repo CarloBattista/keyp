@@ -400,12 +400,10 @@ export default {
     'store.security.isUnlocked': {
       handler(value) {
         if (value && this.auth.profile) {
-          // console.log('✅ Calling loadAccounts from unlock watcher');
           this.loadAccounts();
-        } else {
-          // console.log('❌ Not calling loadAccounts from unlock watcher');
         }
       },
+      deep: true,
     },
   },
   async mounted() {

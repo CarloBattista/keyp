@@ -81,6 +81,13 @@ export default {
       }
     },
     async restoreVaultKey() {
+      // Non fare controlli di autenticazione per le rotte di onboarding
+      const onboardingRoutes = ['/identity/signin', '/identity/signup', '/identity/verify', '/identity/forgot-password', '/identity/reset-password'];
+
+      if (onboardingRoutes.includes(this.$route.path)) {
+        return;
+      }
+
       if (!this.auth.session?.access_token) {
         this.$router.push({ name: 'signin' });
         return;

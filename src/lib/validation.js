@@ -40,6 +40,10 @@ export const ERROR_MESSAGES = {
     tooManyRequests: 'Troppi tentativi. Riprova più tardi',
   },
   generic: 'Errore durante la registrazione. Riprova',
+  confirmPassword: {
+    required: 'Campo obbligatorio',
+    mismatch: 'Le password non corrispondono',
+  },
 };
 
 // Funzioni di validazione individuali
@@ -70,6 +74,11 @@ export const validators = {
 
   secretKey: (secretKey) => {
     if (!secretKey) return ERROR_MESSAGES.secretKey.required;
+    return null;
+  },
+  confirmPassword: (password, confirmPassword) => {
+    if (!confirmPassword) return ERROR_MESSAGES.confirmPassword.required;
+    if (password !== confirmPassword) return ERROR_MESSAGES.confirmPassword.mismatch;
     return null;
   },
 };
@@ -233,4 +242,101 @@ export function validateField(fieldName, value) {
     return validators[fieldName](value);
   }
   return null;
+}
+
+// Funzione di validazione per il form forgot password (solo email)
+export function validateForgotPasswordForm(formData) {
+  const errors = {
+    email: null,
+  };
+
+  // Validazione email
+  errors.email = validators.email(formData.email);
+
+  // Controllo se ci sono errori
+  const isValid = !errors.email;
+
+  return {
+    isValid,
+    errors,
+  };
+}
+
+// Funzione per gestire errori specifici del reset password
+export function handleForgotPasswordErrors(error) {
+  const errors = {
+    email: null,
+  };
+
+  if (!error) return errors;
+
+  const errorMessage = error.message?.toLowerCase() || '';
+
+  // Gestione errori specifici per reset password
+  if (errorMessage.includes('email not confirmed')) {
+    errors.email = ERROR_MESSAGES.email.notConfirmed;
+  } else if (errorMessage.includes('invalid email')) {
+    errors.email = ERROR_MESSAGES.email.invalid;
+  } else if (errorMessage.includes('user not found')) {
+    errors.email = ERROR_MESSAGES.email.notFound;
+  } else if (errorMessage.includes('too many requests')) {
+    errors.email = ERROR_MESSAGES.network.tooManyRequests;
+  } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+    errors.email = ERROR_MESSAGES.network.connection;
+  } else {
+    // Errore generico
+    errors.email = ERROR_MESSAGES.generic;
+  }
+
+  return errors;
+}
+
+// Funzione di validazione per il form reset password
+export function validateResetPasswordForm(formData) {
+  const errors = {
+    password: null,
+    confirm_password: null,
+  };
+
+  // Validazione password
+  errors.password = validators.password(formData.password);
+  
+  // Validazione conferma password
+  errors.confirm_password = validators.confirmPassword(formData.password, formData.confirm_password);
+
+  // Controllo se ci sono errori
+  const isValid = !errors.password && !errors.confirm_password;
+
+  return {
+    isValid,
+    errors,
+  };
+}
+
+// Funzione per gestire errori specifici del reset password
+export function handleResetPasswordErrors(error) {
+  const errors = {
+    password: null,
+    confirm_password: null,
+  };
+
+  if (!error) return errors;
+
+  const errorMessage = error.message?.toLowerCase() || '';
+
+  // Gestione errori specifici per reset password
+  if (errorMessage.includes('password should be at least')) {
+    errors.password = ERROR_MESSAGES.password.minLength;
+  } else if (errorMessage.includes('invalid password')) {
+    errors.password = ERROR_MESSAGES.password.invalid;
+  } else if (errorMessage.includes('too many requests')) {
+    errors.password = ERROR_MESSAGES.network.tooManyRequests;
+  } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+    errors.password = ERROR_MESSAGES.network.connection;
+  } else {
+    // Errore generico
+    errors.password = ERROR_MESSAGES.generic;
+  }
+
+  return errors;
 }

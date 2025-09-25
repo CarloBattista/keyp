@@ -33,6 +33,7 @@ export async function logout() {
     // 5. Pulizia del sessionStorage (vault key)
     sessionStorage.removeItem('vaultKey');
     sessionStorage.removeItem('vaultUnlocked');
+    sessionStorage.removeItem('encryptedVaultKey');
 
     // console.log('Logout completed successfully');
 
@@ -49,6 +50,7 @@ export async function logout() {
     localStorage.removeItem('isAuthenticated');
     sessionStorage.removeItem('vaultKey');
     sessionStorage.removeItem('vaultUnlocked');
+    sessionStorage.removeItem('encryptedVaultKey');
 
     return { success: false, error: error.message };
   }

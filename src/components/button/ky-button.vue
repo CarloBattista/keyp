@@ -106,10 +106,18 @@ export default {
   color: white;
 }
 
+.ky-btn.variant-primary:hover {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
 .ky-btn.variant-secondary {
   background-color: white;
   border-color: black;
   color: black;
+}
+
+.ky-btn.variant-secondary:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* LOADER */

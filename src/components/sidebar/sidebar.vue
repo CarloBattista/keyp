@@ -9,7 +9,8 @@
       </div>
       <div class="w-full mt-4 flex flex-col gap-2">
         <RouterLink to="/vault" class="nav-item">🔐 Vault</RouterLink>
-        <RouterLink to="/vault" class="nav-item">⚙️ Settings</RouterLink>
+        <RouterLink to="/settings" class="nav-item">⚙️ Settings</RouterLink>
+        <button @click="actionLogout" type="button" class="nav-item">🚪 Logout</button>
       </div>
     </nav>
   </div>
@@ -17,6 +18,7 @@
 
 <script>
 import { store } from '../../data/store';
+import { logout } from '../../lib/authService';
 
 export default {
   name: 'sidebar',
@@ -24,6 +26,18 @@ export default {
     return {
       store,
     };
+  },
+  methods: {
+    async actionLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        try {
+          await logout();
+          this.$router.push({ name: 'signin' });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    },
   },
 };
 </script>
@@ -41,17 +55,19 @@ export default {
 
 .btn-item,
 .nav-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   padding: 0.75rem 1rem;
   color: #666;
   text-decoration: none;
   transition: background-color 0.2s;
+  cursor: pointer;
 }
 
 .btn-item {
   background-color: #007bff;
   color: white;
-  cursor: pointer;
 }
 
 .nav-item:hover {
