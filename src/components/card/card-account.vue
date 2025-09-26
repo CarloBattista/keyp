@@ -1,9 +1,10 @@
 <template>
   <div
+    tabindex="0"
     class="card-account relative w-full rounded-3xl px-2.5 py-2 flex gap-3 items-center justify-between overflow-hidden"
     :class="{ loading: loading }"
   >
-    <div class="w-full flex gap-3 items-center justify-start">
+    <div class="card-info w-full flex gap-3 items-center justify-start">
       <img v-if="!loading && false" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
       <div v-else class="account-image relative h-16 aspect-square rounded-2xl flex-none bg-[#e8e8e8]" :class="{ 'skeleton-shimmer': loading }">
         <img
@@ -14,25 +15,32 @@
           class="nrm z-20 w-full h-full rounded-2xl object-cover"
         />
       </div>
-
       <!-- Normal State -->
       <div v-if="!loading" class="account-data relative w-full flex flex-col gap-[2px]">
         <h2 class="text-black text-xl font-semibold">{{ data?.name || 'Account senza nome' }}</h2>
         <p class="text-[#999] text-sm font-normal">{{ data?.email || 'example@gmail.com' }}</p>
       </div>
-
       <!-- Loading State -->
       <div v-else class="account-data relative w-full flex flex-col gap-[2px]">
         <div class="skeleton-shimmer w-[70%] max-w-[70%] h-7 rounded-lg"></div>
         <div class="skeleton-shimmer w-[40%] max-w-[40%] h-5 rounded-md"></div>
       </div>
     </div>
+    <div class="card-actions w-fit flex gap-2 items-center justify-end">
+      <kyIconbutton @click.stop type="button" variant="tertiary" size="small" icon="Ellipsis" />
+      <kyIconbutton @click.stop type="button" variant="destructive" size="small" icon="Trash2" />
+    </div>
   </div>
 </template>
 
 <script>
+import kyIconbutton from '../button/ky-iconbutton.vue';
+
 export default {
   name: 'card-account',
+  components: {
+    kyIconbutton,
+  },
   props: {
     add: {
       type: Boolean,
@@ -53,6 +61,15 @@ export default {
   border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+}
+
+.card-actions {
+  opacity: 0;
+}
+
+.card-account:hover .card-actions,
+.card-account:focus .card-actions {
+  opacity: 1;
 }
 
 .card-account.loading {
