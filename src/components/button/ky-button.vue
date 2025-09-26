@@ -73,7 +73,7 @@ export default {
 
 .ky-btn:disabled,
 .ky-btn.loading {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -88,7 +88,7 @@ export default {
 }
 
 .ky-btn.size-default .label-btn {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 .ky-btn.size-large {
@@ -96,7 +96,7 @@ export default {
 }
 
 .ky-btn.size-large .label-btn {
-  font-size: 1rem;
+  font-size: 1.125rem;
 }
 
 .ky-btn.size-small {

@@ -1,0 +1,6 @@
+{
+    "authentication": {
+        "reset_password": false,
+        "access_with_google_auth": false
+    }
+}

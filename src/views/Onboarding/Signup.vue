@@ -56,10 +56,10 @@
   </div>
   <div v-if="generatedSecretKey" class="fixed top-0 left-0 w-full h-svh px-4 flex items-center justify-center bg-black/70">
     <div class="max-w-[420px] mx-auto p-6 rounded-lg flex flex-col gap-4 shadow-2xl shadow-black/20 border border-solid border-black/10 bg-white">
-      <h3 class="text-[#222] text-2xl font-semibold text-center">Salva in backup la Secret Key per non perdere mai l’accesso</h3>
+      <h3 class="text-[#222] text-2xl font-semibold text-center">Salva in backup la Secret Key per non perdere mai l'accesso</h3>
       <div class="w-full flex flex-col gap-2 items-center py-4 px-6 rounded-lg border border-dashed border-blue-200 bg-blue-200/30">
-        <p class="text-[#222] text-xl font-semibold text-center">A3-6CV6TP •••••• ••••• ••••• ••••• •••••</p>
-        <kyButton type="button" size="small" variant="secondary" leftIcon="Download" label="Salva il PDF" class="w-fit" />
+        <p class="text-[#222] text-xl font-semibold text-center">{{ partialSecretKey }}</p>
+        <kyButton @click="downloadSecretKeyPDF" type="button" size="small" variant="secondary" leftIcon="Download" label="Salva il PDF" class="w-fit" />
       </div>
       <div class="w-full flex flex-col gap-2 items-center py-4 px-6 rounded-lg border border-solid border-orange-200 bg-orange-200/20">
         <p class="text-[#222] text-sm font-normal">
@@ -82,6 +82,7 @@ import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { generateVaultSalt, generateSecretKey, generateSecretKeySalt, hashSecretKey } from '../../lib/crypto';
 import { validateSignupForm, handleSignupErrors } from '../../lib/validation';
+import jsPDF from 'jspdf';
 
 // COMPONENTS
 import kyInput from '../../components/input/ky-input.vue';
@@ -118,6 +119,20 @@ export default {
       },
     };
   },
+  computed: {
+    partialSecretKey() {
+      if (!this.generatedSecretKey) return '';
+      
+      const parts = this.generatedSecretKey.split('-');
+      if (parts.length < 2) return this.generatedSecretKey;
+      
+      // Mostra solo le prime due parti, il resto con punti
+      const visibleParts = parts.slice(0, 2).join('-');
+      const hiddenParts = parts.slice(2).map(() => '••••••').join(' ');
+      
+      return `${visibleParts} ${hiddenParts}`;
+    }
+  },
   methods: {
     validateForm() {
       const validation = validateSignupForm(this.user.data);
@@ -128,8 +143,56 @@ export default {
     handleFormErrors(error) {
       this.user.error = handleSignupErrors(error);
     },
+
     generateSecretKey() {
       this.generatedSecretKey = generateSecretKey();
+    },
+
+    downloadSecretKeyPDF() {
+      try {
+        const doc = new jsPDF();
+        
+        // Configurazione del documento
+        doc.setFontSize(20);
+        doc.text('Keyp - Secret Key Backup', 20, 30);
+        
+        doc.setFontSize(12);
+        doc.text('Data di generazione: ' + new Date().toLocaleDateString('it-IT'), 20, 50);
+        doc.text('Nome: ' + this.user.data.first_name + ' ' + this.user.data.last_name, 20, 65);
+        doc.text('Email: ' + this.user.data.email, 20, 80);
+        
+        // Linea separatrice
+        doc.line(20, 90, 190, 90);
+        
+        // Secret Key
+        doc.setFontSize(14);
+        doc.text('La tua Secret Key:', 20, 110);
+        
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(this.generatedSecretKey, 20, 130);
+        
+        // Avvertenze
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text('IMPORTANTE:', 20, 160);
+        doc.text('• Conserva questo documento in un luogo sicuro', 20, 175);
+        doc.text('• Non condividere mai la tua Secret Key con nessuno', 20, 185);
+        doc.text('• Keyp non può recuperare la tua Secret Key se la perdi', 20, 195);
+        doc.text('• Questa chiave è necessaria per accedere al tuo vault', 20, 205);
+        
+        // Footer
+        doc.setFontSize(8);
+        doc.text('Generato automaticamente da Keyp - https://keyp.app', 20, 280);
+        
+        // Salva il PDF
+        const fileName = `Keyp_SecretKey_${this.user.data.first_name}_${this.user.data.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+      } catch (error) {
+        console.error('Errore durante la generazione del PDF:', error);
+        alert('Errore durante la generazione del PDF. Riprova.');
+      }
     },
 
     async actionSignup() {
@@ -164,6 +227,7 @@ export default {
         this.user.loading = false;
       }
     },
+
     async completeRegistration() {
       if (!this.secretKeyConfirmed || !this.tempUser) return;
 
@@ -179,6 +243,7 @@ export default {
         console.error(e);
       }
     },
+
     async createProfile(user) {
       if (!user.id) {
         return;

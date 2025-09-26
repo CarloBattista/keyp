@@ -4,7 +4,7 @@
     <div class="relative pt-6 max-w-[420px] mx-auto px-4 flex flex-col">
       <h1 class="text-[#222] text-3xl font-semibold text-center mb-8">Sign in to Keyp</h1>
       <kyButton
-        v-if="user.access_with_google"
+        v-if="options.authentication.access_with_google_auth"
         @click="actionSigninWithGoogle"
         type="submit"
         variant="secondary"
@@ -44,7 +44,9 @@
           </svg>
         </template>
       </kyButton>
-      <p v-if="user.access_with_google" class="w-full h-14 text-sm font-normal text-center flex items-center justify-center">or</p>
+      <p v-if="options.authentication.access_with_google_auth" class="w-full h-14 text-sm font-normal text-center flex items-center justify-center">
+        or
+      </p>
       <form @submit.prevent class="w-full flex flex-col gap-4">
         <kyInput
           v-model="user.data.email"
@@ -74,7 +76,9 @@
         <kyButton @click="actionSignin" type="submit" label="Log in" :loading="user.loading" />
       </form>
       <div class="w-full mt-4 text-sm text-center flex flex-col gap-4 items-center justify-center">
-        <RouterLink to="/identity/forgot-password" class="text-blue-500 hover:underline">Reset Password</RouterLink>
+        <RouterLink v-if="options.authentication.reset_password" to="/identity/forgot-password" class="text-blue-500 hover:underline"
+          >Reset Password</RouterLink
+        >
         <p>No account? <RouterLink to="/identity/signup" class="text-blue-500 hover:underline">Create one</RouterLink></p>
       </div>
     </div>
@@ -86,6 +90,7 @@ import { deriveVaultKeyWithSecret, verifySecretKey, encryptAES } from '../../lib
 import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
+import options from '../../json/options.json';
 import { validateSigninForm, handleAuthErrors } from '../../lib/validation';
 
 // COMPONENTS
@@ -102,20 +107,20 @@ export default {
     return {
       auth,
       store,
+      options,
       showIdleLogoutMessage: false,
       user: {
         data: {
           id: null,
-          email: 'carlobattista@gmail.com',
+          email: 'carlobattista25@gmail.com',
           password: 'carlobattista',
-          secretKey: 'MC-5KV0QZ-OY4Y07-A52O1-UOU4B-OC39H-7HI3F',
+          secretKey: 'GV-00CO37-7J93HG-Y6R6H-Y2XRC-IGU8G-4F3EK',
         },
         error: {
           email: null,
           password: null,
           secretKey: null,
         },
-        access_with_google: false,
         loading: false,
       },
     };
@@ -211,7 +216,7 @@ export default {
       }
     },
     async actionSigninWithGoogle() {
-      if (!this.user.access_with_google) {
+      if (!this.options.authentication.access_with_google_auth) {
         return;
       }
 
