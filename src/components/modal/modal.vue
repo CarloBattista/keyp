@@ -10,10 +10,10 @@
   >
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700 pointer-events-auto">
+      <div class="relative bg-white rounded-lg shadow-sm pointer-events-auto">
         <!-- Modal header -->
-        <div v-if="header" class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ head }}</h3>
+        <div v-if="header" class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+          <h3 class="text-lg font-semibold text-[#104737]">{{ head }}</h3>
           <button
             @click="closeModal"
             v-if="closable"
@@ -30,7 +30,7 @@
         <!-- Modal Body -->
         <slot name="body" />
         <!-- Modal Footer -->
-        <div v-if="footer" class="flex items-center justify-start p-4 md:p-5 border-t rounded-b dark:border-gray-600 border-gray-200">
+        <div v-if="footer" class="flex gap-3 items-center justify-start p-4 md:p-5 border-t rounded-b border-gray-200">
           <slot name="footer" />
         </div>
       </div>

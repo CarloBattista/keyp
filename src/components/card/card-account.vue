@@ -4,18 +4,24 @@
     :class="{ loading: loading }"
   >
     <div class="w-full flex gap-3 items-center justify-start">
-      <img v-if="!loading && false" src="" alt="Account image" class="image-blurred" />
+      <img v-if="!loading && false" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
       <div v-else class="account-image relative h-16 aspect-square rounded-2xl flex-none bg-[#e8e8e8]" :class="{ 'skeleton-shimmer': loading }">
-        <img v-if="!loading && false" src="" alt="Account image" class="nrm z-20 w-full h-full rounded-2xl object-cover" />
+        <img
+          v-if="!loading && false"
+          :src="data?.website_logo"
+          alt="Account image"
+          loading="lazy"
+          class="nrm z-20 w-full h-full rounded-2xl object-cover"
+        />
       </div>
 
-      <!-- Account Data - Normal State -->
+      <!-- Normal State -->
       <div v-if="!loading" class="account-data relative w-full flex flex-col gap-[2px]">
         <h2 class="text-black text-xl font-semibold">{{ data?.name || 'Account senza nome' }}</h2>
         <p class="text-[#999] text-sm font-normal">{{ data?.email || 'example@gmail.com' }}</p>
       </div>
 
-      <!-- Account Data - Loading State -->
+      <!-- Loading State -->
       <div v-else class="account-data relative w-full flex flex-col gap-[2px]">
         <div class="skeleton-shimmer w-[70%] max-w-[70%] h-7 rounded-lg"></div>
         <div class="skeleton-shimmer w-[40%] max-w-[40%] h-5 rounded-md"></div>

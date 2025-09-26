@@ -38,75 +38,23 @@
       <form @submit.prevent class="p-4 md:p-5">
         <div class="w-full flex flex-col gap-4 mb-4">
           <div class="w-full grid grid-cols-2 gap-4">
-            <div>
-              <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-              <input
-                v-model="store.modals.newAccount.data.name"
-                type="text"
-                name="name"
-                id="name"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-              />
-            </div>
-            <div>
-              <label for="username" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Username</label>
-              <input
-                v-model="store.modals.newAccount.data.username"
-                type="text"
-                name="username"
-                id="username"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-              />
-            </div>
+            <kyInput v-model="store.modals.newAccount.data.name" type="text" label="Name" forLabel="name" />
+            <kyInput v-model="store.modals.newAccount.data.username" type="text" label="Username" forLabel="username" />
           </div>
-          <div class="col-span-2">
-            <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-            <input
-              v-model="store.modals.newAccount.data.email"
-              type="email"
-              name="email"
-              id="email"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-            />
-          </div>
-          <div class="col-span-2">
-            <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-            <input
-              v-model="store.modals.newAccount.data.password"
-              type="password"
-              name="password"
-              id="password"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-            />
-          </div>
-          <div class="col-span-2">
-            <label for="notes" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Account Notes</label>
-            <textarea
-              v-model="store.modals.newAccount.data.notes"
-              id="notes"
-              rows="4"
-              class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Write account notes here"
-            ></textarea>
-          </div>
+          <kyInput v-model="store.modals.newAccount.data.email" type="email" label="Email" forLabel="email" />
+          <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
+          <kyTextarea
+            v-model="store.modals.newAccount.data.notes"
+            label="Account notes"
+            placeholder="Write account notes here"
+            forLabel="account_notes"
+          />
         </div>
       </form>
     </template>
     <template #footer>
-      <button
-        @click="actionAddAccount"
-        type="submit"
-        class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-      >
-        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <path
-            fill-rule="evenodd"
-            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        Add new account
-      </button>
+      <kyButton @click="store.modals.newAccount.open = false" type="button" variant="secondary" label="Cancel" />
+      <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
     </template>
   </modal>
 </template>
@@ -121,6 +69,9 @@ import sidebar from '../../components/sidebar/sidebar.vue';
 import mainView from '../../components/global/main-view.vue';
 import cardAccount from '../../components/card/card-account.vue';
 import modal from '../../components/modal/modal.vue';
+import kyInput from '../../components/input/ky-input.vue';
+import kyTextarea from '../../components/input/ky-textarea.vue';
+import kyButton from '../../components/button/ky-button.vue';
 
 export default {
   name: 'Vault',
@@ -129,6 +80,9 @@ export default {
     mainView,
     cardAccount,
     modal,
+    kyInput,
+    kyTextarea,
+    kyButton,
   },
   data() {
     return {
