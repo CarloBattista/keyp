@@ -1,19 +1,9 @@
 <template>
   <div class="card-account relative w-full rounded-3xl px-2.5 py-2 flex gap-3 items-center justify-between overflow-hidden" :class="{ added: add }">
     <div class="flex gap-3 items-center justify-start">
-      <img
-        v-if="!add"
-        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSn-NpXvV76-BhqVlwiT8Ql0PoGcSJ-ZOhllA&s"
-        alt="Account image"
-        class="image-blurred"
-      />
+      <img v-if="!add && false" src="" alt="Account image" class="image-blurred" />
       <div class="account-image relative h-16 aspect-square rounded-2xl bg-[#e8e8e8]">
-        <img
-          v-if="!add"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSn-NpXvV76-BhqVlwiT8Ql0PoGcSJ-ZOhllA&s"
-          alt="Account image"
-          class="nrm z-20 w-full h-full rounded-2xl object-cover"
-        />
+        <img v-if="!add && false" src="" alt="Account image" class="nrm z-20 w-full h-full rounded-2xl object-cover" />
       </div>
       <div class="account-data relative flex flex-col">
         <h2 class="text-black text-xl font-semibold">{{ data?.name || 'Account senza nome' }}</h2>

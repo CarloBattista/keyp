@@ -9,7 +9,7 @@
           </h1>
         </div>
         <div class="w-full flex flex-col gap-2.5">
-          <cardAccount v-for="account in 10" :key="account.id" :data="account" />
+          <cardAccount @click="handleAccount(account)" v-for="account in store.accounts.data" :key="account.id" :data="account" />
         </div>
       </template>
     </mainView>
