@@ -8,7 +8,7 @@ export const store = reactive({
   accounts: {
     data: [],
     error: null,
-    loading: false,
+    loading: true,
   },
 
   security: {

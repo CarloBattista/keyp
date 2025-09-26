@@ -9,102 +9,25 @@
           </h1>
         </div>
         <div class="w-full flex flex-col gap-2.5">
-          <cardAccount @click="handleAccount(account)" v-for="account in store.accounts.data" :key="account.id" :data="account" />
-        </div>
-      </template>
-    </mainView>
-    <mainView v-if="false" :innerContainer="640">
-      <template #view>
-        <div class="flex mb-6">
-          <h1 class="text-xl font-semibold">Ciao, {{ auth.profile?.first_name }} (FOR TESTING)</h1>
-        </div>
-        <!-- Lista degli account -->
-        <div class="flex flex-col gap-4">
-          <div
-            @click="handleAccount(account)"
-            v-for="(account, accountIndex) in store.accounts.data"
-            :key="account.id"
-            class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1">{{ account?.name || 'Account senza nome' }}</h3>
-                <p class="text-gray-600 text-sm mb-2">{{ account?.email }}</p>
-                <div class="flex items-center gap-2">
-                  <input
-                    :type="account?.showPassword ? 'text' : 'password'"
-                    :value="account?.tempDecryptedPassword || '••••••••'"
-                    readonly
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded px-2 py-1 w-48"
-                  />
-                  <button @click.stop="togglePasswordVisibility(account, accountIndex)" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                    <svg v-if="!account.showPassword" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                      <path
-                        fill-rule="evenodd"
-                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                    <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                        clip-rule="evenodd"
-                      ></path>
-                      <path
-                        d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"
-                      ></path>
-                    </svg>
-                  </button>
-                  <button
-                    @click.stop="copyPasswordToClipboard(account, accountIndex)"
-                    class="text-gray-500 hover:text-gray-700 cursor-pointer"
-                    title="Copia password"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path>
-                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
-                    </svg>
-                  </button>
-                  <button
-                    @click.stop="deleteAccount(account, accountIndex)"
-                    class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 cursor-pointer"
-                    title="Elimina account"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"></path>
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                  </button>
-                </div>
-                <p v-if="account?.notes" class="text-gray-500 text-xs mt-2">{{ account?.notes }}</p>
+          <div v-for="(accounts, letter) in groupedAccounts" :key="letter" class="w-full">
+            <div v-if="!store.accounts.loading" class="flex items-center mb-1 first:mt-0">
+              <div class="text-[#aaa] text-base font-medium uppercase">{{ letter }}</div>
+            </div>
+            <div class="w-full">
+              <div v-if="store.accounts.loading" class="w-full flex flex-col gap-1">
+                <cardAccount v-for="index in 8" :key="index" :loading="store.accounts.loading" />
               </div>
-              <div class="text-xs text-gray-400">
-                {{ account?.created_at }}
+              <div v-else-if="!store.accounts.loading" class="w-full flex flex-col gap-1">
+                <cardAccount @click="handleAccount(account)" v-for="account in accounts" :key="account.id" :data="account" />
               </div>
             </div>
           </div>
-        </div>
-        <!-- Messaggio quando non ci sono account -->
-        <div v-if="!store.accounts.data || store.accounts.data.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Nessun account salvato</h3>
-          <p class="text-gray-500 mb-4">Inizia aggiungendo il tuo primo account al vault.</p>
-          <button @click="openNewAccountModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-            Aggiungi il primo account
-          </button>
+
+          <!-- Messaggio quando non ci sono account -->
+          <div v-if="Object.keys(groupedAccounts).length === 0 && !store.accounts.loading" class="text-center py-8 text-gray-500">
+            <p class="text-lg font-semibold">Nessun account salvato</p>
+            <p class="text-sm font-normal">Aggiungi il tuo primo account per iniziare</p>
+          </div>
         </div>
       </template>
     </mainView>
@@ -213,6 +136,44 @@ export default {
       store,
       sensitiveDataTimers: new Map(), // Timer per la pulizia automatica
     };
+  },
+  computed: {
+    groupedAccounts() {
+      if (!this.store.accounts.data || this.store.accounts.data.length === 0) {
+        return {};
+      }
+
+      // Raggruppa gli account per lettera iniziale del nome
+      const grouped = this.store.accounts.data.reduce((acc, account) => {
+        const firstLetter = (account.name || '').charAt(0).toUpperCase();
+        const letter = firstLetter.match(/[A-Z]/) ? firstLetter : '#'; // Usa '#' per caratteri non alfabetici
+
+        if (!acc[letter]) {
+          acc[letter] = [];
+        }
+        acc[letter].push(account);
+        return acc;
+      }, {});
+
+      // Ordina gli account all'interno di ogni gruppo
+      Object.keys(grouped).forEach((letter) => {
+        grouped[letter].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it', { sensitivity: 'base' }));
+      });
+
+      // Ordina le lettere alfabeticamente (# alla fine)
+      const sortedGrouped = {};
+      const sortedLetters = Object.keys(grouped).sort((a, b) => {
+        if (a === '#') return 1;
+        if (b === '#') return -1;
+        return a.localeCompare(b, 'it');
+      });
+
+      sortedLetters.forEach((letter) => {
+        sortedGrouped[letter] = grouped[letter];
+      });
+
+      return sortedGrouped;
+    },
   },
   methods: {
     // Verifica che la vault key sia disponibile nello store
