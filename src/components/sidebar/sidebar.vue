@@ -153,7 +153,7 @@ export default {
 
 .nav-item .nav-icon,
 .nav-item .nav-label {
-  color: black;
+  color: #999;
 }
 
 .nav-item.router-link-active {
