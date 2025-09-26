@@ -27,6 +27,11 @@ export default {
     };
   },
   methods: {
+    handleResize() {
+      if (window.innerWidth < 768) {
+        this.store.sidebar.open = false;
+      }
+    },
     clearVaultData() {
       sessionStorage.removeItem('encryptedVaultKey');
       this.store.security.vaultKey = null;
@@ -110,6 +115,7 @@ export default {
     },
   },
   async mounted() {
+    this.handleResize();
     await this.getUser();
 
     if (this.auth.isAuthenticated) {
@@ -119,11 +125,15 @@ export default {
     window.addEventListener('load', () => {
       this.loading = false;
     });
+
+    window.addEventListener('resize', this.handleResize);
   },
   beforeMount() {
     window.removeEventListener('load', () => {
       this.loading = false;
     });
+
+    window.removeEventListener('resize', this.handleResize);
   },
 };
 </script>

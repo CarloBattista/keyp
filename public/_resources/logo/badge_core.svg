@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1164 527.88">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #104737;
+      }
+
+      .cls-2 {
+        fill: #c6ff72;
+        font-family: Parkinsans-ExtraBold, Parkinsans;
+        font-size: 382.38px;
+        font-variation-settings: 'wght' 800;
+        font-weight: 700;
+      }
+
+      .cls-3 {
+        letter-spacing: 0em;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <rect class="cls-1" width="1164" height="527.88" rx="120" ry="120"/>
+      <text class="cls-2" transform="translate(70 373.11)"><tspan class="cls-3" x="0" y="0">K</tspan><tspan x="272.25" y="0">eyp</tspan></text>
+    </g>
+  </g>
+</svg>

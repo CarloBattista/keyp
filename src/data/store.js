@@ -1,6 +1,10 @@
 import { reactive } from 'vue';
 
 export const store = reactive({
+  sidebar: {
+    open: true,
+  },
+
   accounts: {
     data: [],
     error: null,

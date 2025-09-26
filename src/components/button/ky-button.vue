@@ -10,7 +10,7 @@
       <slot name="leftIconCustom" />
     </div>
     <span v-if="loading" class="loader"></span>
-    <span v-if="!loading && label" class="label-btn font-medium">{{ label }}</span>
+    <span v-if="!loading && label" class="label-btn font-medium whitespace-nowrap">{{ label }}</span>
     <div v-if="!loading && rightIcon" class="h-full flex items-center justify-center">
       <component :is="rightIcon" size="20" />
     </div>
@@ -19,13 +19,14 @@
 
 <script>
 // ICONS
-import { Download } from 'lucide-vue-next';
+import { Download, Plus } from 'lucide-vue-next';
 
 export default {
   name: 'ky-button',
   components: {
     // ICONS
     Download,
+    Plus,
   },
   props: {
     type: {
@@ -115,6 +116,15 @@ export default {
 
 .ky-btn.variant-primary:hover {
   background-color: rgba(0, 0, 0, 0.85);
+}
+
+.ky-btn.variant-primary-core {
+  background-color: rgba(16, 71, 55, 1);
+  color: white;
+}
+
+.ky-btn.variant-primary-core:hover {
+  background-color: rgba(16, 71, 55, 0.85);
 }
 
 .ky-btn.variant-secondary {
