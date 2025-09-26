@@ -2,7 +2,7 @@
   <div>
     <RouterView />
     <div
-      v-if="ENV === 'debug'"
+      v-if="ENV === 'debug' && false"
       class="fixed z-[99999] top-3 right-3 p-2 px-4 font-semibold uppercase border border-dashed border-red-500 bg-red-500/30"
     >
       {{ ENV === 'debug' ? 'In testing environment' : 'in production environment' }}

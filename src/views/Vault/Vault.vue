@@ -3,6 +3,18 @@
     <sidebar />
     <mainView :innerContainer="640">
       <template #view>
+        <div class="flex mb-2.5">
+          <h1 class="text-black/50 text-3xl font-semibold">
+            Welcome back, <span class="text-[#104737]">{{ auth.profile?.first_name }}</span>
+          </h1>
+        </div>
+        <div class="w-full flex flex-col gap-2.5">
+          <cardAccount v-for="account in 10" :key="account.id" :data="account" />
+        </div>
+      </template>
+    </mainView>
+    <mainView v-if="false" :innerContainer="640">
+      <template #view>
         <div class="flex mb-6">
           <h1 class="text-xl font-semibold">Ciao, {{ auth.profile?.first_name }} (FOR TESTING)</h1>
         </div>
@@ -184,6 +196,7 @@ import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswo
 
 import sidebar from '../../components/sidebar/sidebar.vue';
 import mainView from '../../components/global/main-view.vue';
+import cardAccount from '../../components/card/card-account.vue';
 import modal from '../../components/modal/modal.vue';
 
 export default {
@@ -191,6 +204,7 @@ export default {
   components: {
     sidebar,
     mainView,
+    cardAccount,
     modal,
   },
   data() {

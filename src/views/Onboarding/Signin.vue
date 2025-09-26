@@ -73,7 +73,7 @@
           :disabled="user.loading"
           class="mb-2"
         />
-        <kyButton @click="actionSignin" type="submit" label="Log in" :loading="user.loading" />
+        <kyButton @click="actionSignin" type="submit" variant="primary-core" label="Log in" :loading="user.loading" />
       </form>
       <div class="w-full mt-4 text-sm text-center flex flex-col gap-4 items-center justify-center">
         <RouterLink v-if="options.authentication.reset_password" to="/identity/forgot-password" class="text-blue-500 hover:underline"
