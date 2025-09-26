@@ -41,6 +41,13 @@ const routes = [
 
   // General
   {
+    path: '/',
+    name: 'landing-page',
+    component: () => import('../views/Landing/Landing-page.vue'),
+    props: true,
+    meta: { title: 'Keyp' },
+  },
+  {
     path: '/vault',
     name: 'vault',
     component: () => import('../views/Vault/Vault.vue'),
