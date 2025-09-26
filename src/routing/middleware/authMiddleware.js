@@ -7,7 +7,7 @@ export const authMiddleware = (to, from, next) => {
 
   // Se la rotta richiede di essere guest e l'utente è autenticato
   if (to.meta.requiresGuest && authIsParsed) {
-    next({ name: 'home' });
+    next({ name: 'vault' });
     return;
   }
 
