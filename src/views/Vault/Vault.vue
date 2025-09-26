@@ -53,7 +53,7 @@
       </form>
     </template>
     <template #footer>
-      <kyButton @click="store.modals.newAccount.open = false" type="button" variant="secondary" label="Cancel" />
+      <kyButton @click="store.modals.newAccount.open = false" type="button" variant="tertiary" label="Cancel" />
       <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
     </template>
   </modal>

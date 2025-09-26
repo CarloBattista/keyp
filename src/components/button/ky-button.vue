@@ -137,6 +137,26 @@ export default {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.ky-btn.variant-tertiary {
+  background-color: transparent;
+  border-color: transparent;
+  color: black;
+}
+
+.ky-btn.variant-tertiary:hover {
+  background-color: rgba(16, 71, 55, 0.1);
+}
+
+.ky-btn.variant-destructive {
+  background-color: rgba(243, 31, 31, 1);
+  border-color: transparent;
+  color: white;
+}
+
+.ky-btn.variant-destructive:hover {
+  background-color: rgba(243, 31, 31, 0.85);
+}
+
 /* LOADER */
 .loader {
   height: 10px;

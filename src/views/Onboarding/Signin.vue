@@ -47,6 +47,7 @@
       <p v-if="options.authentication.access_with_google_auth" class="w-full h-14 text-sm font-normal text-center flex items-center justify-center">
         or
       </p>
+      <notification v-if="showIdleLogoutMessage" type="info" message="La sessione è scaduta dopo 15 minuti di inattività" class="mb-2" />
       <form @submit.prevent class="w-full flex flex-col gap-4">
         <kyInput
           v-model="user.data.email"
@@ -96,12 +97,14 @@ import { validateSigninForm, handleAuthErrors } from '../../lib/validation';
 // COMPONENTS
 import kyInput from '../../components/input/ky-input.vue';
 import kyButton from '../../components/button/ky-button.vue';
+import notification from '../../components/notification/notification.vue';
 
 export default {
   name: 'Signin',
   components: {
     kyInput,
     kyButton,
+    notification,
   },
   data() {
     return {
