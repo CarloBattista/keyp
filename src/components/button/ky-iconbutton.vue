@@ -8,7 +8,7 @@
 
 <script>
 // ICONS
-import { Download, Plus, X, Ellipsis, Trash2, Heart, SquareArrowOutUpRight } from 'lucide-vue-next';
+import { Download, Plus, X, Ellipsis, Trash2, Heart, Star, SquareArrowOutUpRight } from 'lucide-vue-next';
 
 export default {
   name: 'ky-iconbutton',
@@ -20,6 +20,7 @@ export default {
     Ellipsis,
     Trash2,
     Heart,
+    Star,
     SquareArrowOutUpRight,
   },
   props: {
@@ -187,11 +188,13 @@ export default {
 }
 
 /* EXTRA */
-.favorites-button .lucide-heart-icon {
+.favorites-button .lucide-heart-icon,
+.favorites-button .lucide-star-icon {
   fill: transparent;
 }
 
-.favorites-button.favorites .lucide-heart-icon {
+.favorites-button.favorites .lucide-heart-icon,
+.favorites-button.favorites .lucide-star-icon {
   fill: #c6ff72;
   stroke: #c6ff72;
 }

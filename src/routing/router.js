@@ -45,7 +45,7 @@ const routes = [
     name: 'landing-page',
     component: () => import('../views/Landing/Landing-page.vue'),
     props: true,
-    meta: { title: 'Keyp' },
+    meta: { title: 'Keyp', requiresGuest: true },
   },
   {
     path: '/vault',

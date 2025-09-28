@@ -59,12 +59,19 @@
                 type="button"
                 :variant="store.modals.account.data?.isFavorite ? 'primary-core' : 'tertiary'"
                 size="small"
-                icon="Heart"
+                icon="Star"
                 class="favorites-button"
                 :class="{ favorites: store.modals.account.data?.isFavorite }"
               />
               <kyIconButton type="button" variant="tertiary" size="small" icon="SquareArrowOutUpRight" />
-              <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
+              <dropdown position="bottom-right" class="ml-auto">
+                <template #trigger>
+                  <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
+                </template>
+                <template #options>
+                  <dropdownItem @click="deleteAccount(store.modals.account.data)" type="destructive" icon="Trash2" label="Elimina" />
+                </template>
+              </dropdown>
             </div>
           </div>
         </div>
@@ -88,6 +95,8 @@ import kyInput from './components/input/ky-input.vue';
 import kyTextarea from './components/input/ky-textarea.vue';
 import kyButton from './components/button/ky-button.vue';
 import kyIconButton from './components/button/ky-iconbutton.vue';
+import dropdown from './components/dropdown/dropdown.vue';
+import dropdownItem from './components/dropdown/dropdown-item.vue';
 
 export default {
   name: 'App',
@@ -97,6 +106,8 @@ export default {
     kyTextarea,
     kyButton,
     kyIconButton,
+    dropdown,
+    dropdownItem,
   },
   data() {
     return {

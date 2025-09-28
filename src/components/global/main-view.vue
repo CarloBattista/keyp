@@ -1,6 +1,6 @@
 <template>
   <div class="main-view sm:px-6 px-4" :class="{ 'sidebar-open': store.sidebar.open }">
-    <div class="pt-11" :class="`max-w-[${innerContainer}px] mx-auto`">
+    <div class="max-w-[640px] mx-auto pt-11">
       <slot name="view" />
     </div>
   </div>
