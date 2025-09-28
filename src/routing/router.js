@@ -55,9 +55,9 @@ const routes = [
     meta: { title: 'Keyp', requiresAuth: true },
   },
   {
-    path: '/edit-vault/:id',
-    name: 'edit-vault',
-    component: () => import('../views/Vault/Vault-edit.vue'),
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('../views/Vault/Favorites.vue'),
     props: true,
     meta: { title: 'Keyp', requiresAuth: true },
   },

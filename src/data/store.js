@@ -46,6 +46,10 @@ export const store = reactive({
     },
   },
 
+  events: {
+    favoritesUpdated: 0, // Incrementa ogni volta che i preferiti vengono aggiornati
+  },
+
   // Funzioni di sicurezza
   lockVault() {
     this.security.vaultKey = null;
@@ -87,6 +91,10 @@ export const store = reactive({
       // console.log('Auto-restoring vault from sessionStorage on init...');
       this.restoreVaultFromSession();
     }
+  },
+
+  emitFavoritesUpdate() {
+    this.events.favoritesUpdated++;
   },
 });
 

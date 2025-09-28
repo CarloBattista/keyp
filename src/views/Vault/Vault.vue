@@ -18,7 +18,7 @@
                 <cardAccount v-for="index in 8" :key="index" :loading="store.accounts.loading" />
               </div>
               <div v-else-if="!store.accounts.loading" class="w-full flex flex-col gap-1">
-                <cardAccount @click="handleAccount(account)" v-for="account in accounts" :key="account.id" :data="account" />
+                <cardAccount v-for="account in accounts" :key="account.id" :data="account" />
               </div>
             </div>
           </div>
@@ -57,38 +57,6 @@
       <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
     </template>
   </modal>
-  <modal v-if="store.modals.account.open" :header="true" :footer="false" :closable="true" modalKey="account" :head="store.modals.account.data?.name">
-    <template #body>
-      <div class="card-info w-full flex gap-3 items-center justify-start">
-        <div class="account-image relative h-19 aspect-square rounded-[20px] flex-none bg-[#e8e8e8]">
-          <img
-            v-if="store.modals.account.data?.website_logo"
-            :src="store.modals.account.data?.website_logo"
-            alt="Account image"
-            loading="lazy"
-            class="nrm z-20 w-full h-full rounded-2xl object-cover"
-          />
-        </div>
-        <div class="account-data relative w-full flex flex-col gap-[2px]">
-          <h2 class="text-black text-xl font-semibold">{{ store.modals.account.data?.name || 'Account senza nome' }}</h2>
-          <div class="flex gap-1 items-center">
-            <kyIconButton
-              @click="actionFavorites(store.modals.account.data)"
-              type="button"
-              :variant="store.modals.account.data?.isFavorite ? 'primary-core' : 'tertiary'"
-              size="small"
-              icon="Heart"
-              class="favorites-button"
-              :class="{ favorites: store.modals.account.data?.isFavorite }"
-            />
-            <kyIconButton type="button" variant="tertiary" size="small" icon="SquareArrowOutUpRight" />
-            <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
-          </div>
-        </div>
-      </div>
-    </template>
-    <template #footer></template>
-  </modal>
 </template>
 
 <script>
@@ -104,7 +72,6 @@ import modal from '../../components/modal/modal.vue';
 import kyInput from '../../components/input/ky-input.vue';
 import kyTextarea from '../../components/input/ky-textarea.vue';
 import kyButton from '../../components/button/ky-button.vue';
-import kyIconButton from '../../components/button/ky-iconbutton.vue';
 
 export default {
   name: 'Vault',
@@ -116,7 +83,6 @@ export default {
     kyInput,
     kyTextarea,
     kyButton,
-    kyIconButton,
   },
   data() {
     return {
@@ -201,69 +167,7 @@ export default {
     openNewAccountModal() {
       this.store.modals.newAccount.open = true;
     },
-    handleAccount(account) {
-      const ACCOUNT_ID = account.id;
 
-      if (!ACCOUNT_ID) {
-        return;
-      }
-
-      this.$router.push(`/vault#${ACCOUNT_ID}`);
-      this.store.modals.account.data = account;
-      this.store.modals.account.open = true;
-    },
-
-    async loadAccounts() {
-      this.store.accounts.loading = true;
-
-      if (!this.auth.profile || !this.auth.profile.id) {
-        this.store.accounts.loading = false;
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('vault_entries')
-          .select('id, name, email, password, password_salt, notes')
-          .eq('profile_id', this.auth.profile.id);
-
-        if (!error) {
-          // console.log(data);
-          this.store.accounts.data = data;
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        this.store.accounts.loading = false;
-      }
-    },
-    async getAccount(accountId) {
-      this.store.modals.account.loading = true;
-
-      try {
-        // Carica i dati dell'account
-        const { data: accountData, error: accountError } = await supabase.from('vault_entries').select('*').eq('id', accountId).single();
-
-        if (!accountError && accountData) {
-          this.store.modals.account.data = accountData;
-
-          // Controlla se l'account è tra i preferiti
-          const { data: favoriteData, error: favoriteError } = await supabase
-            .from('favorites')
-            .select('id')
-            .eq('profile_id', this.auth.profile.id)
-            .eq('account_id', accountId)
-            .maybeSingle();
-
-          // Imposta lo stato dei preferiti
-          this.store.modals.account.data.isFavorite = !favoriteError && favoriteData;
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        this.store.modals.account.loading = false;
-      }
-    },
     async actionAddAccount() {
       this.store.modals.newAccount.loading = true;
 
@@ -393,58 +297,6 @@ export default {
         console.log('Errore durante');
       }
     },
-    async actionFavorites(account) {
-      const profileId = this.auth.profile.id;
-      const accountId = account.id;
-
-      if (!profileId || !accountId) {
-        return;
-      }
-
-      try {
-        if (account.isFavorite) {
-          // Rimuovi dai preferiti
-          const { error } = await supabase.from('favorites').delete().eq('profile_id', profileId).eq('account_id', accountId);
-
-          if (!error) {
-            account.isFavorite = false;
-          }
-        } else {
-          // Aggiungi ai preferiti
-          const { error } = await supabase.from('favorites').insert({
-            profile_id: profileId,
-            account_id: accountId,
-          });
-
-          if (!error) {
-            account.isFavorite = true;
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
-  },
-  watch: {
-    'store.security.isUnlocked': {
-      handler(value) {
-        if (value && this.auth.profile) {
-          this.loadAccounts();
-        }
-      },
-      deep: true,
-    },
-    '$route.hash': {
-      handler(value) {
-        if (value) {
-          const accountId = value.replace('#', '');
-          this.store.modals.account.id = accountId;
-          this.getAccount(accountId);
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
   },
   async mounted() {
     // Prova a ripristinare dal sessionStorage
@@ -452,14 +304,6 @@ export default {
       // console.log('🔄 Trying to restore vault from sessionStorage...');
       this.store.restoreVaultFromSession();
       // console.log('- store.security.isUnlocked after restore:', this.store.security.isUnlocked);
-    }
-
-    // Carica gli account solo se sbloccato E profilo disponibile
-    if (this.store.security.isUnlocked && this.auth.profile) {
-      // console.log('✅ Calling loadAccounts from mounted');
-      await this.loadAccounts();
-    } else {
-      // console.log('❌ Not calling loadAccounts:');
     }
   },
   beforeUnmount() {

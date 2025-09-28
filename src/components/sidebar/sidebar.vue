@@ -14,7 +14,13 @@
             </div>
             <span v-if="store.sidebar.open" class="nav-label">Vault</span>
           </RouterLink>
-          <RouterLink @click.stop to="/settings" class="nav-item">
+          <RouterLink @click.stop to="/favorites" class="nav-item">
+            <div class="nav-icon h-full flex items-center justify-center">
+              <Heart size="20" />
+            </div>
+            <span v-if="store.sidebar.open" class="nav-label">Favorites</span>
+          </RouterLink>
+          <RouterLink v-if="false" @click.stop to="/settings" class="nav-item">
             <div class="nav-icon h-full flex items-center justify-center">
               <Settings size="20" />
             </div>
@@ -54,7 +60,7 @@ import { logout } from '../../lib/authService';
 import kyButton from '../../components/button/ky-button.vue';
 
 // ICONS
-import { Vault, Settings } from 'lucide-vue-next';
+import { Vault, Heart, Settings } from 'lucide-vue-next';
 
 export default {
   name: 'sidebar',
@@ -63,6 +69,7 @@ export default {
 
     // ICONS
     Vault,
+    Heart,
     Settings,
   },
   data() {

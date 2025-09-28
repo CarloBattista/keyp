@@ -1,5 +1,6 @@
 <template>
   <div
+    @click="handleAccount(data)"
     tabindex="0"
     class="card-account relative w-full rounded-3xl px-2.5 py-2 flex gap-3 items-center justify-between overflow-hidden"
     :class="{ loading: loading }"
@@ -34,6 +35,8 @@
 </template>
 
 <script>
+import { store } from '../../data/store';
+
 import kyIconbutton from '../button/ky-iconbutton.vue';
 
 export default {
@@ -51,6 +54,29 @@ export default {
       default: false,
     },
     data: Object,
+  },
+  data() {
+    return {
+      store,
+    };
+  },
+  methods: {
+    handleAccount(account) {
+      const ACCOUNT_ID = account.id;
+      const CURRENT_ROUTE = this.$route.path;
+
+      if (!ACCOUNT_ID) {
+        return;
+      }
+
+      if (CURRENT_ROUTE === '/favorites') {
+        account.isFavorite = true;
+      }
+
+      this.$router.push(`${CURRENT_ROUTE}#${ACCOUNT_ID}`);
+      this.store.modals.account.data = account;
+      this.store.modals.account.open = true;
+    },
   },
 };
 </script>
