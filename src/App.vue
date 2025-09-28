@@ -89,6 +89,7 @@ import { decryptAES } from './lib/crypto';
 import { SessionManager } from './lib/sessionManager';
 import { encryptPasswordWithVaultKey } from './lib/crypto';
 import { generateAvatarFallback, AvatarSizes } from './lib/avatar';
+import { deleteAccount, toggleFavorite } from './lib/vaultOperations';
 
 import modal from './components/modal/modal.vue';
 import kyInput from './components/input/ky-input.vue';
@@ -313,36 +314,22 @@ export default {
       }
     },
     async actionFavorites(account) {
-      const profileId = this.auth.profile.id;
-      const accountId = account.id;
+      const success = await toggleFavorite(account, () => {
+        this.store.emitFavoritesUpdate();
+      });
 
-      if (!profileId || !accountId) {
-        return;
+      if (!success) {
+        console.error('Operazione sui preferiti fallita');
       }
+    },
+    async deleteAccount(account) {
+      const success = await deleteAccount(account, async () => {
+        await this.loadAccounts();
+        this.store.modals.account.open = false;
+      });
 
-      try {
-        if (account.isFavorite) {
-          // Rimuovi dai preferiti
-          const { error } = await supabase.from('favorites').delete().eq('profile_id', profileId).eq('account_id', accountId);
-
-          if (!error) {
-            account.isFavorite = false;
-            this.store.emitFavoritesUpdate();
-          }
-        } else {
-          // Aggiungi ai preferiti
-          const { error } = await supabase.from('favorites').insert({
-            profile_id: profileId,
-            account_id: accountId,
-          });
-
-          if (!error) {
-            account.isFavorite = true;
-            this.store.emitFavoritesUpdate();
-          }
-        }
-      } catch (e) {
-        console.error(e);
+      if (!success) {
+        console.error('Eliminazione fallita');
       }
     },
   },

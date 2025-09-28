@@ -35,9 +35,9 @@
 </template>
 
 <script>
-import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
+import { deleteAccount } from '../../lib/vaultOperations';
 
 import kyIconbutton from '../button/ky-iconbutton.vue';
 
@@ -82,20 +82,12 @@ export default {
     },
 
     async deleteAccount(account) {
-      const confirmMessage = `Sei sicuro di voler eliminare l'account "${account.name}"?\n\nQuesta azione è irreversibile.`;
+      const success = await deleteAccount(account, () => {
+        this.$emit('load-accounts');
+      });
 
-      if (!confirm(confirmMessage)) {
-        return; // L'utente ha annullato
-      }
-
-      try {
-        const { error } = await supabase.from('vault_entries').delete().eq('id', account.id).eq('profile_id', this.auth.profile.id);
-
-        if (!error) {
-          this.$emit('load-accounts');
-        }
-      } catch (e) {
-        console.error(e);
+      if (!success) {
+        console.error('Eliminazione fallita');
       }
     },
   },
