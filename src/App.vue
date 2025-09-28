@@ -8,6 +8,30 @@
       {{ ENV === 'debug' ? 'In testing environment' : 'in production environment' }}
     </div>
 
+    <modal v-if="store.modals.newAccount.open" :header="true" :footer="true" :closable="true" modalKey="newAccount" head="Aggiungi un nuovo account">
+      <template #body>
+        <form @submit.prevent>
+          <div class="w-full flex flex-col gap-4 mb-4">
+            <div class="w-full grid grid-cols-2 gap-4">
+              <kyInput v-model="store.modals.newAccount.data.name" type="text" label="Name" forLabel="name" />
+              <kyInput v-model="store.modals.newAccount.data.username" type="text" label="Username" forLabel="username" />
+            </div>
+            <kyInput v-model="store.modals.newAccount.data.email" type="email" label="Email" forLabel="email" />
+            <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
+            <kyTextarea
+              v-model="store.modals.newAccount.data.notes"
+              label="Account notes"
+              placeholder="Write account notes here"
+              forLabel="account_notes"
+            />
+          </div>
+        </form>
+      </template>
+      <template #footer>
+        <kyButton @click="store.modals.newAccount.open = false" type="button" variant="tertiary" label="Cancel" />
+        <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
+      </template>
+    </modal>
     <modal
       v-if="store.modals.account.open"
       :header="true"
@@ -56,14 +80,22 @@ import { auth } from './data/auth';
 import { store } from './data/store';
 import { decryptAES } from './lib/crypto';
 import { SessionManager } from './lib/sessionManager';
+import { encryptPasswordWithVaultKey } from './lib/crypto';
+import { generateAvatarFallback, AvatarSizes } from './lib/avatar';
 
 import modal from './components/modal/modal.vue';
+import kyInput from './components/input/ky-input.vue';
+import kyTextarea from './components/input/ky-textarea.vue';
+import kyButton from './components/button/ky-button.vue';
 import kyIconButton from './components/button/ky-iconbutton.vue';
 
 export default {
   name: 'App',
   components: {
     modal,
+    kyInput,
+    kyTextarea,
+    kyButton,
     kyIconButton,
   },
   data() {
@@ -74,6 +106,14 @@ export default {
     };
   },
   methods: {
+    // Verifica che la vault key sia disponibile nello store
+    ensureVaultKey() {
+      if (!this.store.security.vaultKey || !this.store.security.isUnlocked) {
+        throw new Error('Vault non sbloccato. Effettua nuovamente il login.');
+      }
+
+      return this.store.security.vaultKey;
+    },
     handleResize() {
       if (window.innerWidth < 768) {
         this.store.sidebar.open = false;
@@ -158,6 +198,56 @@ export default {
         console.error(e);
         SessionManager.clearAllData();
         this.$router.push({ name: 'signin' });
+      }
+    },
+    async actionAddAccount() {
+      this.store.modals.newAccount.loading = true;
+
+      if (!this.auth.profile.id) {
+        this.store.modals.newAccount.loading = false;
+        return;
+      }
+
+      const CURRENT_ROUTE = this.$route.path;
+
+      try {
+        // Usa la vault key già derivata durante il login
+        const vaultKey = this.ensureVaultKey();
+
+        // Usa la nuova funzione con vault key derivata
+        const encryptionResult = encryptPasswordWithVaultKey(this.store.modals.newAccount.data.password, vaultKey);
+
+        const websiteLogo = generateAvatarFallback(this.store.modals.newAccount.data.name, AvatarSizes.LARGE);
+
+        const { error } = await supabase.from('vault_entries').insert({
+          profile_id: this.auth.profile.id,
+          name: this.store.modals.newAccount.data.name,
+          email: this.store.modals.newAccount.data.email,
+          password: encryptionResult.encryptedPassword,
+          password_salt: encryptionResult.passwordSalt,
+          notes: this.store.modals.newAccount.data.notes,
+          website_logo: websiteLogo,
+        });
+
+        if (!error) {
+          this.store.modals.newAccount.open = false;
+          await this.loadAccounts();
+
+          if (CURRENT_ROUTE !== '/vault') {
+            this.$router.push({ name: 'vault' });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        if (e.message.includes('Vault non sbloccato')) {
+          alert('Sessione scaduta. Effettua nuovamente il login.');
+          this.$router.push({ name: 'signin' });
+        } else {
+          // eslint-disable-next-line quotes
+          alert("Errore nell'aggiunta dell'account.");
+        }
+      } finally {
+        this.store.modals.newAccount.loading = false;
       }
     },
     async loadAccounts() {
