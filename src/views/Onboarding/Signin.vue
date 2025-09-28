@@ -116,8 +116,8 @@ export default {
         data: {
           id: null,
           email: 'carlobattista25@gmail.com',
-          password: 'carlobattista',
-          secretKey: 'GV-00CO37-7J93HG-Y6R6H-Y2XRC-IGU8G-4F3EK',
+          password: 'Carlopieroanna1324@1',
+          secretKey: 'DR-B3SCOO-VWL0Y2-FPKDL-3UD83-6BJO2-MOBEG',
         },
         error: {
           email: null,

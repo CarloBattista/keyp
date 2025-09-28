@@ -18,7 +18,7 @@
                 <cardAccount v-for="index in 8" :key="index" :loading="store.accounts.loading" />
               </div>
               <div v-else-if="!store.accounts.loading" class="w-full flex flex-col gap-1">
-                <cardAccount v-for="account in accounts" :key="account.id" :data="account" />
+                <cardAccount v-for="account in accounts" :key="account.id" :data="account" @load-accounts="loadAccounts" />
               </div>
             </div>
           </div>
@@ -64,6 +64,7 @@ import { supabase } from '../../lib/supabase';
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
 import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../../lib/crypto';
+import { generateAvatarFallback, AvatarSizes } from '../../lib/avatar';
 
 import sidebar from '../../components/sidebar/sidebar.vue';
 import mainView from '../../components/global/main-view.vue';
@@ -167,6 +168,9 @@ export default {
     openNewAccountModal() {
       this.store.modals.newAccount.open = true;
     },
+    loadAccounts() {
+      this.$emit('load-accounts');
+    },
 
     async actionAddAccount() {
       this.store.modals.newAccount.loading = true;
@@ -183,6 +187,8 @@ export default {
         // Usa la nuova funzione con vault key derivata
         const encryptionResult = encryptPasswordWithVaultKey(this.store.modals.newAccount.data.password, vaultKey);
 
+        const websiteLogo = generateAvatarFallback(this.store.modals.newAccount.data.name, AvatarSizes.LARGE);
+
         const { error } = await supabase.from('vault_entries').insert({
           profile_id: this.auth.profile.id,
           name: this.store.modals.newAccount.data.name,
@@ -190,10 +196,10 @@ export default {
           password: encryptionResult.encryptedPassword,
           password_salt: encryptionResult.passwordSalt,
           notes: this.store.modals.newAccount.data.notes,
+          website_logo: websiteLogo,
         });
 
         if (!error) {
-          await this.loadAccounts();
           this.store.modals.newAccount.open = false;
         }
       } catch (e) {
@@ -207,6 +213,7 @@ export default {
         }
       } finally {
         this.store.modals.newAccount.loading = false;
+        this.$emit('load-accounts');
       }
     },
     async togglePasswordVisibility(account, index) {
@@ -275,26 +282,6 @@ export default {
         } else {
           alert('Errore nella copia della password.');
         }
-      }
-    },
-    async deleteAccount(account, accountIndex) {
-      const confirmMessage = `Sei sicuro di voler eliminare l'account "${account.name}"?\n\nQuesta azione è irreversibile.`;
-
-      if (!confirm(confirmMessage)) {
-        return; // L'utente ha annullato
-      }
-
-      try {
-        const { error } = await supabase.from('vault_entries').delete().eq('id', account.id).eq('profile_id', this.auth.profile.id);
-
-        if (!error) {
-          // Pulisci eventuali dati sensibili prima di rimuovere
-          this.clearAccountSensitiveData(account, accountIndex);
-          await this.loadAccounts();
-        }
-      } catch (e) {
-        console.error(e);
-        console.log('Errore durante');
       }
     },
   },

@@ -6,10 +6,10 @@
     :class="{ loading: loading }"
   >
     <div class="card-info w-full flex gap-3 items-center justify-start">
-      <img v-if="!loading && false" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
-      <div v-else class="account-image relative h-16 aspect-square rounded-2xl flex-none bg-[#e8e8e8]" :class="{ 'skeleton-shimmer': loading }">
+      <img v-if="!loading" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
+      <div class="account-image relative h-16 aspect-square rounded-2xl flex-none bg-[#e8e8e8]" :class="{ 'skeleton-shimmer': loading }">
         <img
-          v-if="!loading && false"
+          v-if="!loading && data?.website_logo"
           :src="data?.website_logo"
           alt="Account image"
           loading="lazy"
@@ -29,12 +29,14 @@
     </div>
     <div class="card-actions w-fit flex gap-2 items-center justify-end">
       <kyIconbutton @click.stop type="button" variant="tertiary" size="small" icon="Ellipsis" />
-      <kyIconbutton @click.stop type="button" variant="destructive" size="small" icon="Trash2" />
+      <kyIconbutton @click.stop="deleteAccount(data)" type="button" variant="destructive" size="small" icon="Trash2" />
     </div>
   </div>
 </template>
 
 <script>
+import { supabase } from '../../lib/supabase';
+import { auth } from '../../data/auth';
 import { store } from '../../data/store';
 
 import kyIconbutton from '../button/ky-iconbutton.vue';
@@ -57,6 +59,7 @@ export default {
   },
   data() {
     return {
+      auth,
       store,
     };
   },
@@ -76,6 +79,24 @@ export default {
       this.$router.push(`${CURRENT_ROUTE}#${ACCOUNT_ID}`);
       this.store.modals.account.data = account;
       this.store.modals.account.open = true;
+    },
+
+    async deleteAccount(account) {
+      const confirmMessage = `Sei sicuro di voler eliminare l'account "${account.name}"?\n\nQuesta azione è irreversibile.`;
+
+      if (!confirm(confirmMessage)) {
+        return; // L'utente ha annullato
+      }
+
+      try {
+        const { error } = await supabase.from('vault_entries').delete().eq('id', account.id).eq('profile_id', this.auth.profile.id);
+
+        if (!error) {
+          this.$emit('load-accounts');
+        }
+      } catch (e) {
+        console.error(e);
+      }
     },
   },
 };

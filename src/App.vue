@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RouterView />
+    <RouterView @load-accounts="loadAccounts" />
     <div
       v-if="ENV === 'debug' && false"
       class="fixed z-[99999] top-3 right-3 p-2 px-4 font-semibold uppercase border border-dashed border-red-500 bg-red-500/30"
@@ -171,7 +171,7 @@ export default {
       try {
         const { data, error } = await supabase
           .from('vault_entries')
-          .select('id, name, email, password, password_salt, notes')
+          .select('id, name, email, password, password_salt, notes, website_logo')
           .eq('profile_id', this.auth.profile.id);
 
         if (!error) {
