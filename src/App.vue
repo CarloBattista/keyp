@@ -355,6 +355,17 @@ export default {
       immediate: true,
       deep: true,
     },
+    'store.modals.account.open': {
+      handler(value) {
+        const CURRENT_ROUTE = this.$route.path;
+
+        if (!value) {
+          this.$router.push(`${CURRENT_ROUTE}`);
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
   },
   async mounted() {
     this.handleResize();
