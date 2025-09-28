@@ -58,7 +58,35 @@
     </template>
   </modal>
   <modal v-if="store.modals.account.open" :header="true" :footer="false" :closable="true" modalKey="account" :head="store.modals.account.data?.name">
-    <template #body></template>
+    <template #body>
+      <div class="card-info w-full flex gap-3 items-center justify-start">
+        <div class="account-image relative h-19 aspect-square rounded-[20px] flex-none bg-[#e8e8e8]">
+          <img
+            v-if="store.modals.account.data?.website_logo"
+            :src="store.modals.account.data?.website_logo"
+            alt="Account image"
+            loading="lazy"
+            class="nrm z-20 w-full h-full rounded-2xl object-cover"
+          />
+        </div>
+        <div class="account-data relative w-full flex flex-col gap-[2px]">
+          <h2 class="text-black text-xl font-semibold">{{ store.modals.account.data?.name || 'Account senza nome' }}</h2>
+          <div class="flex gap-1 items-center">
+            <kyIconButton
+              @click="actionFavorites(store.modals.account.data)"
+              type="button"
+              :variant="store.modals.account.data?.isFavorite ? 'primary-core' : 'tertiary'"
+              size="small"
+              icon="Heart"
+              class="favorites-button"
+              :class="{ favorites: store.modals.account.data?.isFavorite }"
+            />
+            <kyIconButton type="button" variant="tertiary" size="small" icon="SquareArrowOutUpRight" />
+            <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
+          </div>
+        </div>
+      </div>
+    </template>
     <template #footer></template>
   </modal>
 </template>
@@ -76,6 +104,7 @@ import modal from '../../components/modal/modal.vue';
 import kyInput from '../../components/input/ky-input.vue';
 import kyTextarea from '../../components/input/ky-textarea.vue';
 import kyButton from '../../components/button/ky-button.vue';
+import kyIconButton from '../../components/button/ky-iconbutton.vue';
 
 export default {
   name: 'Vault',
@@ -87,6 +116,7 @@ export default {
     kyInput,
     kyTextarea,
     kyButton,
+    kyIconButton,
   },
   data() {
     return {
@@ -211,11 +241,22 @@ export default {
       this.store.modals.account.loading = true;
 
       try {
-        const { data, error } = await supabase.from('vault_entries').select('*').eq('id', accountId).single();
+        // Carica i dati dell'account
+        const { data: accountData, error: accountError } = await supabase.from('vault_entries').select('*').eq('id', accountId).single();
 
-        if (!error) {
-          // console.log(data);
-          this.store.modals.account.data = data;
+        if (!accountError && accountData) {
+          this.store.modals.account.data = accountData;
+
+          // Controlla se l'account è tra i preferiti
+          const { data: favoriteData, error: favoriteError } = await supabase
+            .from('favorites')
+            .select('id')
+            .eq('profile_id', this.auth.profile.id)
+            .eq('account_id', accountId)
+            .maybeSingle();
+
+          // Imposta lo stato dei preferiti
+          this.store.modals.account.data.isFavorite = !favoriteError && favoriteData;
         }
       } catch (e) {
         console.error(e);
@@ -350,6 +391,37 @@ export default {
       } catch (e) {
         console.error(e);
         console.log('Errore durante');
+      }
+    },
+    async actionFavorites(account) {
+      const profileId = this.auth.profile.id;
+      const accountId = account.id;
+
+      if (!profileId || !accountId) {
+        return;
+      }
+
+      try {
+        if (account.isFavorite) {
+          // Rimuovi dai preferiti
+          const { error } = await supabase.from('favorites').delete().eq('profile_id', profileId).eq('account_id', accountId);
+
+          if (!error) {
+            account.isFavorite = false;
+          }
+        } else {
+          // Aggiungi ai preferiti
+          const { error } = await supabase.from('favorites').insert({
+            profile_id: profileId,
+            account_id: accountId,
+          });
+
+          if (!error) {
+            account.isFavorite = true;
+          }
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
   },

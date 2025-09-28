@@ -8,7 +8,7 @@
     aria-hidden="true"
     class="fixed z-[999] top-0 right-0 left-0 overflow-y-auto overflow-x-hidden flex justify-end items-center w-full h-svh p-4 pointer-events-none"
   >
-    <div class="relative w-full max-w-md h-full">
+    <div class="relative w-full sm:max-w-md h-full">
       <!-- Modal content -->
       <div
         class="modal-content relative w-full h-full bg-white rounded-lg shadow-sm pointer-events-auto"
