@@ -57,6 +57,10 @@
       <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
     </template>
   </modal>
+  <modal v-if="store.modals.account.open" :header="true" :footer="false" :closable="true" modalKey="account" :head="store.modals.account.data?.name">
+    <template #body></template>
+    <template #footer></template>
+  </modal>
 </template>
 
 <script>
@@ -174,7 +178,9 @@ export default {
         return;
       }
 
-      this.$router.push({ name: 'edit-vault', params: { id: ACCOUNT_ID } });
+      this.$router.push(`/vault#${ACCOUNT_ID}`);
+      this.store.modals.account.data = account;
+      this.store.modals.account.open = true;
     },
 
     async loadAccounts() {
@@ -199,6 +205,22 @@ export default {
         console.error(e);
       } finally {
         this.store.accounts.loading = false;
+      }
+    },
+    async getAccount(accountId) {
+      this.store.modals.account.loading = true;
+
+      try {
+        const { data, error } = await supabase.from('vault_entries').select('*').eq('id', accountId).single();
+
+        if (!error) {
+          // console.log(data);
+          this.store.modals.account.data = data;
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.store.modals.account.loading = false;
       }
     },
     async actionAddAccount() {
@@ -338,6 +360,17 @@ export default {
           this.loadAccounts();
         }
       },
+      deep: true,
+    },
+    '$route.hash': {
+      handler(value) {
+        if (value) {
+          const accountId = value.replace('#', '');
+          this.store.modals.account.id = accountId;
+          this.getAccount(accountId);
+        }
+      },
+      immediate: true,
       deep: true,
     },
   },

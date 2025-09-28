@@ -37,6 +37,13 @@ export const store = reactive({
       open: false,
       loading: false,
     },
+    account: {
+      id: null,
+      data: null,
+      error: null,
+      open: false,
+      loading: false,
+    },
   },
 
   // Funzioni di sicurezza
