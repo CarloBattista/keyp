@@ -355,10 +355,12 @@ export default {
     },
     'store.modals.account.open': {
       handler(value) {
-        const CURRENT_ROUTE = this.$route.path;
-
-        if (!value) {
-          this.$router.push(`${CURRENT_ROUTE}`);
+        if (!value && this.$route.hash) {
+          // Rimuovi solo l'hash dalla URL corrente invece di fare push della stessa rotta
+          this.$router.replace({
+            path: this.$route.path,
+            query: this.$route.query,
+          });
         }
       },
       immediate: true,
