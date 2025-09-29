@@ -66,26 +66,24 @@ export function getAccountColor(accountName) {
   if (!accountName) return '#999999';
 
   const colors = [
-    '#FF6B6B', // Rosso corallo
-    '#4ECDC4', // Turchese
-    '#45B7D1', // Blu cielo
-    '#96CEB4', // Verde menta
-    '#FFEAA7', // Giallo pastello
-    '#DDA0DD', // Viola chiaro
-    '#98D8C8', // Verde acqua
-    '#F7DC6F', // Giallo oro
-    '#BB8FCE', // Lavanda
-    '#85C1E9', // Blu pastello
-    '#F8C471', // Arancione pastello
-    '#82E0AA', // Verde lime
-    '#F1948A', // Rosa salmone
-    '#AED6F1', // Azzurro
-    '#D7BDE2', // Malva
-    '#A3E4D7', // Verde acquamarina
-    '#F9E79F', // Giallo limone
-    '#D5A6BD', // Rosa antico
-    '#A9DFBF', // Verde salvia
-    '#FAD7A0', // Pesca
+    '#ff4081',
+    '#9c27b0',
+    '#673ab7',
+    '#3f51b5',
+    '#2196f3',
+    '#03a9f4',
+    '#00bcd4',
+    '#009688',
+    '#4caf50',
+    '#8bc34a',
+    '#cddc39',
+    '#ffc107',
+    '#ff9800',
+    '#ff5722',
+    '#795548',
+    '#9e9e9e',
+    '#607d8b',
+    '#f44336',
   ];
 
   // Genera un hash basato sul nome per consistenza
