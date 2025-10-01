@@ -50,6 +50,14 @@ export default {
       },
       immediate: true,
     },
+    'toast.message': {
+      handler(newMessage, oldMessage) {
+        // Se il toast è aperto e il messaggio è cambiato, riavvia il timer
+        if (this.toast.show && newMessage && newMessage !== oldMessage) {
+          this.autoCloseToast();
+        }
+      },
+    },
   },
 };
 </script>
