@@ -18,7 +18,7 @@ export function generateAvatarFallback(accountName, size = 64) {
   // Genera un SVG con le iniziali
   const svg = `
     <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${size}" height="${size}" rx="${size * 0.1875}" fill="${backgroundColor}"/>
+      <rect width="${size}" height="${size}" fill="${backgroundColor}"/>
       <text x="${size / 2}" y="${size * 0.625}" 
             font-family="Arial, sans-serif" 
             font-size="${size * 0.375}" 
@@ -104,7 +104,7 @@ export function getAccountColor(accountName) {
 function generateDefaultAvatar(size = 64) {
   const svg = `
     <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${size}" height="${size}" rx="${size * 0.1875}" fill="#999999"/>
+      <rect width="${size}" height="${size}" fill="#999999"/>
       <text x="${size / 2}" y="${size * 0.625}" 
             font-family="Arial, sans-serif" 
             font-size="${size * 0.375}" 

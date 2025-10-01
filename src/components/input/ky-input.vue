@@ -9,7 +9,8 @@
       <div
         @focus="handleFocus"
         @blur="handleBlur"
-        class="input-container relative w-full h-13 max-h-13 px-4 rounded-lg flex gap-2 items-center justify-start border border-solid"
+        class="input-container relative w-full px-4 rounded-lg flex gap-2 items-center justify-start border border-solid"
+        :class="'size-' + size"
       >
         <div v-if="icon" class="input-icon h-full flex items-center justify-center opacity-50 pointer-events-none">
           <component :is="icon" size="18" />
@@ -48,7 +49,7 @@
 
 <script>
 // ICONS
-import { Eye, EyeClosed, Mail, KeyRound } from 'lucide-vue-next';
+import { Eye, EyeClosed, Mail, KeyRound, Search as SearchIcon } from 'lucide-vue-next';
 
 export default {
   name: 'ky-input',
@@ -58,6 +59,7 @@ export default {
     EyeClosed,
     Mail,
     KeyRound,
+    SearchIcon,
   },
   props: {
     modelValue: {
@@ -67,6 +69,10 @@ export default {
     type: {
       type: String,
       default: 'text',
+    },
+    size: {
+      type: String,
+      default: 'default',
     },
     forLabel: String,
     icon: String,
@@ -125,6 +131,8 @@ export default {
   background-color: white;
   color: black;
   border-color: rgba(0, 0, 0, 0.2);
+  min-height: 42px;
+  max-height: 52px;
   padding-top: 1rem;
   outline-color: transparent;
   cursor: text;
@@ -132,6 +140,14 @@ export default {
   /* transition-property: background-color, color, border-color, border-width, outline-color, outline-width;
   transition-duration: 200ms;
   transition-timing-function: ease; */
+}
+
+.input-container.size-default {
+  height: 52px;
+}
+
+.input-container.size-small {
+  height: 42px;
 }
 
 .input-container input:read-only {

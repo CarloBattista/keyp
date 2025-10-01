@@ -63,7 +63,7 @@
                 class="favorites-button"
                 :class="{ favorites: store.modals.account.data?.isFavorite }"
               />
-              <kyIconButton type="button" variant="tertiary" size="small" icon="SquareArrowOutUpRight" />
+              <kyIconButton v-if="false" type="button" variant="tertiary" size="small" icon="SquareArrowOutUpRight" />
               <dropdown position="bottom-right" class="ml-auto">
                 <template #trigger>
                   <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />

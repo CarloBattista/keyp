@@ -8,6 +8,9 @@
             Welcome back, <span class="text-[#104737]">{{ auth.profile?.first_name }}</span>
           </h1>
         </div>
+        <div class="relative w-full mb-6">
+          <kyInput type="text" size="small" icon="SearchIcon" placeholder="Search..." forLabel="search_bar" />
+        </div>
         <div class="w-full flex flex-col gap-2.5">
           <div v-for="(accounts, letter) in groupedAccounts" :key="letter" class="w-full">
             <div v-if="!store.accounts.loading" class="flex items-center mb-1 first:mt-0">
@@ -42,6 +45,7 @@ import { decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData 
 import sidebar from '../../components/sidebar/sidebar.vue';
 import mainView from '../../components/global/main-view.vue';
 import cardAccount from '../../components/card/card-account.vue';
+import kyInput from '../../components/input/ky-input.vue';
 
 export default {
   name: 'Vault',
@@ -49,6 +53,7 @@ export default {
     sidebar,
     mainView,
     cardAccount,
+    kyInput,
   },
   data() {
     return {
