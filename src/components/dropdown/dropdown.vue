@@ -6,7 +6,7 @@
     <transition name="slide-fade">
       <div
         v-if="isOpen"
-        class="dropdown-options absolute w-max min-w-[180px] p-1 flex flex-col gap-1 rounded-[20px] border border-solid border-black/10 bg-white shadow-2xl shadow-black/15"
+        class="dropdown-options absolute z-[999] w-max min-w-[180px] p-1 flex flex-col gap-1 rounded-[20px] border border-solid border-black/10 bg-white shadow-2xl shadow-black/15"
         :class="position"
       >
         <slot name="options" />
