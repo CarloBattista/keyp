@@ -69,6 +69,7 @@
                   <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
                 </template>
                 <template #options>
+                  <dropdownItem icon="Pencil" label="Modifica" />
                   <dropdownItem @click="deleteAccount(store.modals.account.data)" type="destructive" icon="Trash2" label="Elimina" />
                 </template>
               </dropdown>
@@ -86,14 +87,28 @@
             />
             <kyInputCopy
               v-if="store.modals.account.data?.password"
-              type="password"
+              :type="store.modals.account.data?.showPassword ? 'text' : 'password'"
               label="Password"
-              value="••••••••••"
+              :value="store.modals.account.data?.showPassword ? store.modals.account.data?.tempDecryptedPassword : '••••••••••'"
               :grouped="true"
               @copy-password-to-clipboard="copyPasswordToClipboard"
+              @show-password="togglePasswordVisibility"
             />
           </kyGrouped>
           <kyInputCopy v-if="store.modals.account.data?.username" type="text" label="Username" :value="store.modals.account.data?.username" />
+          <kyInputCopy
+            v-if="store.modals.account.data?.notes"
+            type="notes"
+            label="Notes"
+            :value="store.modals.account.data?.notes"
+            :copiable="false"
+          />
+          <p v-if="store.modals.account.data?.updated_at">
+            Ultima modifica {{ formatUpdatedDate(store.modals.account.data?.updated_at, { showTime: true }) }}
+          </p>
+          <p v-else-if="!store.modals.account.data?.updated_at">
+            Creato il {{ formatCreatedDate(store.modals.account.data?.created_at, { showTime: true }) }}
+          </p>
         </div>
       </template>
       <template #footer></template>
@@ -110,6 +125,7 @@ import { SessionManager } from './lib/sessionManager';
 import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy } from './lib/crypto';
 import { generateAvatarFallback, AvatarSizes } from './lib/avatar';
 import { deleteAccount, toggleFavorite } from './lib/vaultOperations';
+import { formatCreatedDate, formatUpdatedDate } from './lib/dateUtils';
 
 import modal from './components/modal/modal.vue';
 import kyInput from './components/input/ky-input.vue';
@@ -139,9 +155,14 @@ export default {
       auth,
       store,
       ENV: import.meta.env.VITE_ENV,
+
+      sensitiveDataTimers: new Map(),
     };
   },
   methods: {
+    formatCreatedDate,
+    formatUpdatedDate,
+
     // Verifica che la vault key sia disponibile nello store
     ensureVaultKey() {
       if (!this.store.security.vaultKey || !this.store.security.isUnlocked) {
@@ -162,6 +183,29 @@ export default {
       if (this.store.security.autoLockTimer) {
         clearTimeout(this.store.security.autoLockTimer);
         this.store.security.autoLockTimer = null;
+      }
+    },
+    setSensitiveDataTimer(account, index, delay = 5000) {
+      if (this.sensitiveDataTimers.has(index)) {
+        clearTimeout(this.sensitiveDataTimers.get(index));
+      }
+
+      const timer = setTimeout(() => {
+        this.clearAccountSensitiveData(account, index);
+        account.showPassword = false;
+        this.sensitiveDataTimers.delete(index);
+      }, delay);
+
+      this.sensitiveDataTimers.set(index, timer);
+    },
+    clearAccountSensitiveData(account) {
+      if (account.tempDecryptedPassword) {
+        // Sovrascrivi la password temporanea con caratteri casuali prima di eliminarla
+        account.tempDecryptedPassword = Array(account.tempDecryptedPassword.length)
+          .fill(0)
+          .map(() => Math.random().toString(36))
+          .join('');
+        account.tempDecryptedPassword = null;
       }
     },
 
@@ -297,7 +341,7 @@ export default {
       try {
         const { data, error } = await supabase
           .from('vault_entries')
-          .select('id, name, email, password, password_salt, notes, website_logo')
+          .select('id, name, email, password, password_salt, notes, website_logo, created_at, updated_at')
           .eq('profile_id', this.auth.profile.id);
 
         if (!error) {
@@ -380,6 +424,46 @@ export default {
         } else {
           alert('Errore nella copia della password.');
         }
+      }
+    },
+    async togglePasswordVisibility(index = 0) {
+      if (!this.store.security.isUnlocked && !this.store.security.vaultKey) {
+        return;
+      }
+
+      const account = this.store.modals.account.data;
+
+      if (account.showPassword) {
+        this.clearAccountSensitiveData(account);
+        account.showPassword = false;
+
+        // Cancella il timer se esiste
+        if (this.sensitiveDataTimers.has(index)) {
+          clearTimeout(this.sensitiveDataTimers.get(index));
+          this.sensitiveDataTimers.delete(index);
+        }
+        return; // Esci dalla funzione dopo aver nascosto la password
+      }
+
+      // Se la password non è visibile, mostrala
+      try {
+        const vaultKey = this.ensureVaultKey();
+
+        let decryptedPassword;
+
+        if (account.password_salt) {
+          decryptedPassword = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
+        } else {
+          decryptedPassword = decryptPasswordLegacy(account.password, vaultKey);
+        }
+
+        account.tempDecryptedPassword = decryptedPassword;
+        account.showPassword = true;
+
+        const timeoutShowPassword = 10000; // 10 secondi
+        this.setSensitiveDataTimer(account, index, timeoutShowPassword);
+      } catch (e) {
+        console.error(e);
       }
     },
   },

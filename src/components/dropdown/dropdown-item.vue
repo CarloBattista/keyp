@@ -1,5 +1,9 @@
 <template>
-  <div class="dropdown-item min-h-10 px-2 py-1 rounded-2xl flex gap-2 items-center" :class="['type-' + type, { disabled: disabled }]">
+  <div
+    @click="handleClick"
+    class="dropdown-item min-h-10 px-2 py-1 rounded-2xl flex gap-2 items-center"
+    :class="['type-' + type, { disabled: disabled }]"
+  >
     <div class="h-full flex flex-none items-center justify-center">
       <component :is="icon" size="16" />
     </div>
@@ -9,15 +13,17 @@
 
 <script>
 // ICONS
-import { Star, Trash2 } from 'lucide-vue-next';
+import { Star, Pencil, Trash2 } from 'lucide-vue-next';
 
 export default {
   name: 'dropdown-item',
   components: {
     // ICONS
     Star,
+    Pencil,
     Trash2,
   },
+  inject: ['closeDropdown'],
   props: {
     type: {
       type: String,
@@ -28,6 +34,21 @@ export default {
     disabled: {
       type: Boolean,
       default: false,
+    },
+  },
+  methods: {
+    handleClick(event) {
+      if (this.disabled) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      setTimeout(() => {
+        if (this.closeDropdown) {
+          this.closeDropdown();
+        }
+      }, 0);
     },
   },
 };

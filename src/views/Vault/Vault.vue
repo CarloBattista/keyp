@@ -82,7 +82,7 @@
 <script>
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
-import { decryptPasswordWithVaultKey, decryptPasswordLegacy, clearSensitiveData } from '../../lib/crypto';
+import { clearSensitiveData } from '../../lib/crypto';
 import { SearchService, SearchUtils } from '../../lib/searchService';
 import { supabase } from '../../lib/supabase';
 
@@ -302,36 +302,6 @@ export default {
         console.error('Errore nella funzione setStats:', error);
       }
     },
-    async togglePasswordVisibility(account, index) {
-      if (!this.store.security.isUnlocked && !this.store.security.vaultKey) {
-        return;
-      }
-
-      if (account.showPassword) {
-        this.clearAccountSensitiveData(account, index);
-        account.showPassword = false;
-      } else {
-        try {
-          const vaultKey = this.ensureVaultKey();
-
-          let decryptedPassword;
-
-          if (account.password_salt) {
-            decryptedPassword = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
-          } else {
-            decryptedPassword = decryptPasswordLegacy(account.password, vaultKey);
-          }
-
-          account.tempDecryptedPassword = decryptedPassword;
-          account.showPassword = true;
-
-          const timeoutShowPassword = 15000;
-          this.setSensitiveDataTimer(account, index, timeoutShowPassword);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    },
   },
   watch: {
     'search.searchQuery': {
@@ -366,8 +336,8 @@ export default {
     });
   },
   beforeUnmount() {
-    this.search.sensitiveDataTimers.forEach((timer) => clearTimeout(timer));
-    this.search.sensitiveDataTimers.clear();
+    this.sensitiveDataTimers.forEach((timer) => clearTimeout(timer));
+    this.sensitiveDataTimers.clear();
 
     if (this.search.typingTimer) {
       clearTimeout(this.search.typingTimer);

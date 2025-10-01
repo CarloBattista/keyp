@@ -19,7 +19,7 @@
 
 <script>
 // ICONS
-import { Download, Plus } from 'lucide-vue-next';
+import { Download, Plus, ChevronDown } from 'lucide-vue-next';
 
 export default {
   name: 'ky-button',
@@ -27,6 +27,7 @@ export default {
     // ICONS
     Download,
     Plus,
+    ChevronDown,
   },
   props: {
     type: {

@@ -8,7 +8,7 @@
 
 <script>
 // ICONS
-import { Download, Plus, X, Ellipsis, Trash2, Heart, Star, SquareArrowOutUpRight } from 'lucide-vue-next';
+import { Download, Plus, X, Ellipsis, Trash2, Heart, Star, SquareArrowOutUpRight, ChevronDown } from 'lucide-vue-next';
 
 export default {
   name: 'ky-iconbutton',
@@ -22,6 +22,7 @@ export default {
     Heart,
     Star,
     SquareArrowOutUpRight,
+    ChevronDown,
   },
   props: {
     type: {
