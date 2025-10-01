@@ -75,6 +75,26 @@
             </div>
           </div>
         </div>
+        <div class="w-full mt-6 flex flex-col gap-4">
+          <kyGrouped>
+            <kyInputCopy
+              v-if="store.modals.account.data?.email"
+              type="email"
+              label="Email address"
+              :value="store.modals.account.data?.email"
+              :grouped="true"
+            />
+            <kyInputCopy
+              v-if="store.modals.account.data?.password"
+              type="password"
+              label="Password"
+              value="••••••••••"
+              :grouped="true"
+              @copy-password-to-clipboard="copyPasswordToClipboard"
+            />
+          </kyGrouped>
+          <kyInputCopy v-if="store.modals.account.data?.username" type="text" label="Username" :value="store.modals.account.data?.username" />
+        </div>
       </template>
       <template #footer></template>
     </modal>
@@ -87,7 +107,7 @@ import { auth } from './data/auth';
 import { store } from './data/store';
 import { decryptAES } from './lib/crypto';
 import { SessionManager } from './lib/sessionManager';
-import { encryptPasswordWithVaultKey } from './lib/crypto';
+import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswordLegacy } from './lib/crypto';
 import { generateAvatarFallback, AvatarSizes } from './lib/avatar';
 import { deleteAccount, toggleFavorite } from './lib/vaultOperations';
 
@@ -98,6 +118,8 @@ import kyButton from './components/button/ky-button.vue';
 import kyIconButton from './components/button/ky-iconbutton.vue';
 import dropdown from './components/dropdown/dropdown.vue';
 import dropdownItem from './components/dropdown/dropdown-item.vue';
+import kyGrouped from './components/button/ky-grouped.vue';
+import kyInputCopy from './components/button/ky-input-copy.vue';
 
 export default {
   name: 'App',
@@ -109,6 +131,8 @@ export default {
     kyIconButton,
     dropdown,
     dropdownItem,
+    kyGrouped,
+    kyInputCopy,
   },
   data() {
     return {
@@ -330,6 +354,32 @@ export default {
 
       if (!success) {
         console.error('Eliminazione fallita');
+      }
+    },
+    async copyPasswordToClipboard() {
+      const account = this.store.modals.account.data;
+
+      try {
+        const vaultKey = this.ensureVaultKey();
+
+        let passwordToCopy;
+
+        if (account.password_salt) {
+          passwordToCopy = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
+        } else {
+          passwordToCopy = decryptPasswordLegacy(account.password, vaultKey);
+        }
+
+        await navigator.clipboard.writeText(passwordToCopy);
+        passwordToCopy = null;
+      } catch (err) {
+        console.error('Errore nella copia:', err);
+        if (err.message.includes('Vault non sbloccato')) {
+          alert('Sessione scaduta. Effettua nuovamente il login.');
+          this.$router.push({ name: 'signin' });
+        } else {
+          alert('Errore nella copia della password.');
+        }
       }
     },
   },

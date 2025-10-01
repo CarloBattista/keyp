@@ -332,30 +332,6 @@ export default {
         }
       }
     },
-    async copyPasswordToClipboard(account) {
-      try {
-        const vaultKey = this.ensureVaultKey();
-
-        let passwordToCopy;
-
-        if (account.password_salt) {
-          passwordToCopy = decryptPasswordWithVaultKey(account.password, vaultKey, account.password_salt);
-        } else {
-          passwordToCopy = decryptPasswordLegacy(account.password, vaultKey);
-        }
-
-        await navigator.clipboard.writeText(passwordToCopy);
-        passwordToCopy = null;
-      } catch (err) {
-        console.error('Errore nella copia:', err);
-        if (err.message.includes('Vault non sbloccato')) {
-          alert('Sessione scaduta. Effettua nuovamente il login.');
-          this.$router.push({ name: 'signin' });
-        } else {
-          alert('Errore nella copia della password.');
-        }
-      }
-    },
   },
   watch: {
     'search.searchQuery': {
