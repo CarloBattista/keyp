@@ -2,7 +2,7 @@
   <div
     @click="handleAccount(data)"
     tabindex="0"
-    class="card-account relative w-full rounded-3xl px-2.5 py-2 flex gap-3 items-center justify-between overflow-hidden"
+    class="card-account relative w-full rounded-3xl px-2.5 py-2 flex gap-3 items-center justify-between"
     :class="{ loading: loading }"
   >
     <div class="card-info w-full flex gap-3 items-center justify-start">
@@ -28,8 +28,16 @@
       </div>
     </div>
     <div class="card-actions w-fit flex gap-2 items-center justify-end">
-      <kyIconbutton @click.stop type="button" variant="tertiary" size="small" icon="Ellipsis" />
-      <kyIconbutton @click.stop="deleteAccount(data)" type="button" variant="destructive" size="small" icon="Trash2" />
+      <dropdown @click.stop position="bottom-right" class="ml-auto">
+        <template #trigger>
+          <kyIconbutton type="button" variant="tertiary" size="small" icon="Ellipsis" />
+        </template>
+        <template #options>
+          <dropdownItem @click="getAccountForEdit(data)" icon="Pencil" label="Modifica" />
+          <dropdownItem @click="deleteAccount(data)" type="destructive" icon="Trash2" label="Elimina" />
+        </template>
+      </dropdown>
+      <kyIconbutton v-if="false" @click.stop="deleteAccount(data)" type="button" variant="destructive" size="small" icon="Trash2" />
     </div>
   </div>
 </template>
@@ -40,11 +48,15 @@ import { store } from '../../data/store';
 import { deleteAccount } from '../../lib/vaultOperations';
 
 import kyIconbutton from '../button/ky-iconbutton.vue';
+import dropdown from '../dropdown/dropdown.vue';
+import dropdownItem from '../dropdown/dropdown-item.vue';
 
 export default {
   name: 'card-account',
   components: {
     kyIconbutton,
+    dropdown,
+    dropdownItem,
   },
   props: {
     add: {
@@ -79,6 +91,18 @@ export default {
       this.$router.push(`${CURRENT_ROUTE}#${ACCOUNT_ID}`);
       this.store.modals.account.data = account;
       this.store.modals.account.open = true;
+    },
+    getAccountForEdit(account) {
+      const ACCOUNT_ID = account.id;
+      const CURRENT_ROUTE = this.$route.path;
+
+      if (!ACCOUNT_ID) {
+        return;
+      }
+
+      this.$router.push(`${CURRENT_ROUTE}#edit-${ACCOUNT_ID}`);
+      this.store.modals.editAccount.data = account;
+      this.store.modals.editAccount.open = true;
     },
 
     async deleteAccount(account) {

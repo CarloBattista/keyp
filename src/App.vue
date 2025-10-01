@@ -32,14 +32,31 @@
         <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
       </template>
     </modal>
-    <modal
-      v-if="store.modals.account.open"
-      :header="true"
-      :footer="false"
-      :closable="true"
-      modalKey="account"
-      :head="store.modals.account.data?.name"
-    >
+    <modal v-if="store.modals.editAccount.open" :header="true" :footer="true" :closable="true" modalKey="editAccount" head="Modifica account">
+      <template #body>
+        <form @submit.prevent>
+          <div class="w-full flex flex-col gap-4 mb-4">
+            <div class="w-full grid grid-cols-2 gap-4">
+              <kyInput v-model="store.modals.editAccount.data.name" type="text" label="Name" forLabel="name" />
+              <kyInput v-model="store.modals.editAccount.data.username" type="text" label="Username" forLabel="username" />
+            </div>
+            <kyInput v-model="store.modals.editAccount.data.email" type="email" label="Email" forLabel="email" />
+            <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" />
+            <kyTextarea
+              v-model="store.modals.editAccount.data.notes"
+              label="Account notes"
+              placeholder="Write account notes here"
+              forLabel="account_notes"
+            />
+          </div>
+        </form>
+      </template>
+      <template #footer>
+        <kyButton @click="store.modals.editAccount.open = false" type="button" variant="tertiary" label="Cancel" />
+        <kyButton @click="actionUpdateAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.editAccount.loading" />
+      </template>
+    </modal>
+    <modal v-if="store.modals.account.open" :header="true" :footer="false" :closable="true" modalKey="account" head="Dettagli account">
       <template #body>
         <div class="card-info w-full flex gap-3 items-center justify-start">
           <div class="account-image relative h-19 aspect-square rounded-[20px] flex-none bg-[#e8e8e8]">
@@ -69,7 +86,7 @@
                   <kyIconButton type="button" variant="secondary" size="small" icon="Ellipsis" class="ml-auto" />
                 </template>
                 <template #options>
-                  <dropdownItem icon="Pencil" label="Modifica" />
+                  <dropdownItem @click="getAccountForEdit(store.modals.account.data)" icon="Pencil" label="Modifica" />
                   <dropdownItem @click="deleteAccount(store.modals.account.data)" type="destructive" icon="Trash2" label="Elimina" />
                 </template>
               </dropdown>
@@ -88,6 +105,7 @@
             <kyInputCopy
               v-if="store.modals.account.data?.password"
               :type="store.modals.account.data?.showPassword ? 'text' : 'password'"
+              forType="password"
               label="Password"
               :value="store.modals.account.data?.showPassword ? store.modals.account.data?.tempDecryptedPassword : '••••••••••'"
               :grouped="true"
@@ -103,10 +121,10 @@
             :value="store.modals.account.data?.notes"
             :copiable="false"
           />
-          <p v-if="store.modals.account.data?.updated_at">
+          <p v-if="store.modals.account.data?.updated_at" class="text-[#aaa]">
             Ultima modifica {{ formatUpdatedDate(store.modals.account.data?.updated_at, { showTime: true }) }}
           </p>
-          <p v-else-if="!store.modals.account.data?.updated_at">
+          <p v-else-if="!store.modals.account.data?.updated_at" class="text-[#aaa]">
             Creato il {{ formatCreatedDate(store.modals.account.data?.created_at, { showTime: true }) }}
           </p>
         </div>
@@ -255,6 +273,7 @@ export default {
         console.error(e);
       }
     },
+
     async restoreVaultKey() {
       // Non fare controlli di autenticazione per le rotte di onboarding
       const onboardingRoutes = ['/identity/signin', '/identity/signup', '/identity/verify', '/identity/forgot-password', '/identity/reset-password'];
@@ -384,6 +403,30 @@ export default {
         this.store.modals.account.loading = false;
       }
     },
+    async getAccountForEdit(account) {
+      this.store.modals.editAccount.loading = true;
+
+      const ACCOUNT_ID = account.id;
+      const CURRENT_ROUTE = this.$route.path;
+
+      try {
+        const { data, error } = await supabase.from('vault_entries').select('*').eq('id', ACCOUNT_ID).single();
+
+        if (!error && data) {
+          // console.log(data);
+          this.store.modals.editAccount.data = data;
+          this.store.modals.editAccount.open = true;
+
+          this.$router.push(`${CURRENT_ROUTE}#edit-${ACCOUNT_ID}`);
+
+          this.store.modals.account.open = false;
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.store.modals.editAccount.loading = false;
+      }
+    },
     async actionFavorites(account) {
       const success = await toggleFavorite(account, () => {
         this.store.emitFavoritesUpdate();
@@ -391,6 +434,51 @@ export default {
 
       if (!success) {
         console.error('Operazione sui preferiti fallita');
+      }
+    },
+    async actionUpdateAccount() {
+      this.store.modals.editAccount.loading = true;
+
+      if (!this.auth.profile.id) {
+        this.store.modals.editAccount.loading = false;
+        return;
+      }
+
+      try {
+        // Usa la vault key già derivata durante il login
+        const vaultKey = this.ensureVaultKey();
+
+        const accountData = this.store.modals.editAccount.data;
+
+        // Prepara i dati da aggiornare
+        const updateData = {
+          name: accountData.name,
+          email: accountData.email,
+          username: accountData.username,
+          notes: accountData.notes,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Se la password è stata modificata, crittografala
+        if (accountData.password && accountData.password.trim() !== '') {
+          // Usa la nuova funzione con vault key derivata per crittografare la password
+          const encryptionResult = encryptPasswordWithVaultKey(accountData.password, vaultKey);
+
+          updateData.password = encryptionResult.encryptedPassword;
+          updateData.password_salt = encryptionResult.passwordSalt;
+        }
+
+        // Aggiorna l'account nel database
+        const { error } = await supabase.from('vault_entries').update(updateData).eq('id', accountData.id).eq('profile_id', this.auth.profile.id);
+
+        if (!error) {
+          this.store.modals.editAccount.open = false;
+          await this.loadAccounts();
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.store.modals.editAccount.loading = false;
       }
     },
     async deleteAccount(account) {
@@ -482,18 +570,40 @@ export default {
     '$route.hash': {
       handler(value) {
         if (value && this.auth.profile) {
-          const accountId = value.replace('#', '');
-          this.store.modals.account.id = accountId;
-          this.getAccount(accountId);
+          const hashValue = value.replace('#', '');
+
+          // Controlla se l'hash inizia con "edit-"
+          if (hashValue.startsWith('edit-')) {
+            const accountId = hashValue.replace('edit-', '');
+            this.getAccountForEdit({ id: accountId });
+          } else {
+            // Hash normale per aprire il modal dell'account
+            this.store.modals.account.id = hashValue;
+            this.getAccount(hashValue);
+          }
         }
       },
       immediate: true,
       deep: true,
     },
+
     'store.modals.account.open': {
       handler(value) {
-        if (!value && this.$route.hash) {
+        if (!value && this.$route.hash && !this.store.modals.editAccount.open) {
           // Rimuovi solo l'hash dalla URL corrente invece di fare push della stessa rotta
+          this.$router.replace({
+            path: this.$route.path,
+            query: this.$route.query,
+          });
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
+    'store.modals.editAccount.open': {
+      handler(value) {
+        if (!value && this.$route.hash && this.$route.hash.includes('edit-')) {
+          // Rimuovi l'hash quando il modal di edit si chiude
           this.$router.replace({
             path: this.$route.path,
             query: this.$route.query,
@@ -505,6 +615,8 @@ export default {
     },
   },
   async mounted() {
+    this.$router.push('/vault');
+
     this.handleResize();
     await this.getUser();
 

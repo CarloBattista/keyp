@@ -39,6 +39,24 @@ export const store = reactive({
       open: false,
       loading: false,
     },
+    editAccount: {
+      data: {
+        name: '',
+        username: '',
+        email: '',
+        password: '',
+        notes: '',
+      },
+      error: {
+        name: null,
+        username: null,
+        email: null,
+        password: null,
+        notes: null,
+      },
+      open: false,
+      loading: false,
+    },
     account: {
       id: null,
       data: null,

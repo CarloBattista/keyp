@@ -3,7 +3,7 @@
     <div
       @click="focusInput"
       class="field-container relative w-full flex flex-col gap-2"
-      :class="{ focus: focus, active: modelValue.length > 0, error: error, disabled: disabled, 'without-label': !label }"
+      :class="{ focus: focus, active: modelValue?.length > 0, error: error, disabled: disabled, 'without-label': !label }"
     >
       <label v-if="label" :for="forLabel" class="input-label">{{ label }} <span v-if="required">*</span></label>
       <div

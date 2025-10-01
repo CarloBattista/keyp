@@ -7,7 +7,7 @@
     </div>
     <div v-if="copiable" class="action-container absolute top-0 right-0 h-full p-1 flex gap-1 opacity-0 group-hover:opacity-100">
       <kyButton @click="copyToClipboard" type="button" variant="tertiary" label="Copia" class="btn-xtr" />
-      <dropdown>
+      <dropdown v-if="forType === 'password'">
         <template #trigger>
           <kyButton type="button" variant="tertiary" leftIcon="ChevronDown" class="btn-xtr" />
         </template>
@@ -44,6 +44,7 @@ export default {
     },
     label: String,
     value: String,
+    forType: String,
     grouped: {
       type: Boolean,
       default: false,

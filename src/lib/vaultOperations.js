@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { auth } from '../data/auth';
+import { store } from '../data/store';
 
 /**
  * Elimina un account dal vault
@@ -56,6 +57,10 @@ export async function toggleFavorite(account, onSuccess = null) {
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess();
         }
+
+        store.toast.show = true;
+        store.toast.message = 'Rimosso dai preferiti';
+
         return true;
       }
     } else {
@@ -70,6 +75,10 @@ export async function toggleFavorite(account, onSuccess = null) {
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess();
         }
+
+        store.toast.show = true;
+        store.toast.message = 'Aggiunto ai preferiti';
+
         return true;
       }
     }
