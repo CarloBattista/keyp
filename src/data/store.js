@@ -1,5 +1,7 @@
 import { reactive } from 'vue';
 
+const timerTimeout = 15 * 60 * 1000; // 15 minuti
+
 export const store = reactive({
   sidebar: {
     open: true,
@@ -77,12 +79,9 @@ export const store = reactive({
     if (this.security.autoLockTimer) {
       clearTimeout(this.security.autoLockTimer);
     }
-    this.security.autoLockTimer = setTimeout(
-      () => {
-        this.lockVault();
-      },
-      5 * 60 * 1000
-    ); // 5 minuti
+    this.security.autoLockTimer = setTimeout(() => {
+      this.lockVault();
+    }, timerTimeout);
   },
   init() {
     // Prova a ripristinare automaticamente la vault key al caricamento
