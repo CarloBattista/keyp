@@ -52,6 +52,15 @@ export const store = reactive({
     favoritesUpdated: 0, // Incrementa ogni volta che i preferiti vengono aggiornati
   },
 
+  toast: {
+    type: 'info',
+    show: false,
+    closable: false,
+    autoCloseDelay: 5000, // 5 secondi
+    autoCloseTimeout: null, // Timer per chiusura automatica
+    message: 'Questo è un messaggio di test',
+  },
+
   // Funzioni di sicurezza
   lockVault() {
     this.security.vaultKey = null;

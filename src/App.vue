@@ -114,6 +114,7 @@
       <template #footer></template>
     </modal>
   </div>
+  <toast />
 </template>
 
 <script>
@@ -136,6 +137,7 @@ import dropdown from './components/dropdown/dropdown.vue';
 import dropdownItem from './components/dropdown/dropdown-item.vue';
 import kyGrouped from './components/button/ky-grouped.vue';
 import kyInputCopy from './components/button/ky-input-copy.vue';
+import toast from './components/toast/toast.vue';
 
 export default {
   name: 'App',
@@ -149,6 +151,7 @@ export default {
     dropdownItem,
     kyGrouped,
     kyInputCopy,
+    toast,
   },
   data() {
     return {

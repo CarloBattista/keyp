@@ -20,6 +20,8 @@
 </template>
 
 <script>
+import { store } from '../../data/store';
+
 import kyButton from './ky-button.vue';
 import dropdown from '../dropdown/dropdown.vue';
 import dropdownItem from '../dropdown/dropdown-item.vue';
@@ -55,6 +57,11 @@ export default {
       default: false,
     },
   },
+  data() {
+    return {
+      store,
+    };
+  },
   methods: {
     copyToClipboard() {
       if (!this.copiable && this.disabled) {
@@ -66,6 +73,7 @@ export default {
       } else {
         navigator.clipboard.writeText(this.value);
       }
+      this.toastMessage(this.type);
     },
     showPassword() {
       if (this.disabled) {
@@ -73,6 +81,21 @@ export default {
       }
 
       this.$emit('show-password');
+    },
+    toastMessage(type) {
+      if (type === 'password') {
+        this.store.toast.show = true;
+        this.store.toast.message = 'Password copiata';
+      } else if (type === 'email') {
+        this.store.toast.show = true;
+        this.store.toast.message = 'Email copiata';
+      } else if (type === 'notes') {
+        this.store.toast.show = true;
+        this.store.toast.message = 'Note copiate';
+      } else {
+        this.store.toast.show = true;
+        this.store.toast.message = 'Copiato';
+      }
     },
   },
 };
