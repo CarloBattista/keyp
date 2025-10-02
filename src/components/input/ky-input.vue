@@ -81,6 +81,14 @@ export default {
     helpText: String,
     error: String,
     required: Boolean,
+    min: {
+      type: Number,
+      default: 0,
+    },
+    max: {
+      type: Number,
+      default: 500,
+    },
     readOnly: {
       type: Boolean,
       default: false,
@@ -221,5 +229,23 @@ export default {
 .eye-fade-leave-from {
   opacity: 1;
   transform: scale(1);
+}
+
+input {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  -webkit-appearance: none !important;
+  -ms-progress-appearance: none !important;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  /* display: none; <- Crashes Chrome on hover */
+  -webkit-appearance: none;
+  margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+input[type='number'] {
+  -moz-appearance: textfield; /* Firefox */
 }
 </style>

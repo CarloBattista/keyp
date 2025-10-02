@@ -17,7 +17,50 @@
               <kyInput v-model="store.modals.newAccount.data.username" type="text" label="Username" forLabel="username" />
             </div>
             <kyInput v-model="store.modals.newAccount.data.email" type="email" label="Email" forLabel="email" />
-            <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
+            <dropdown position="bottom-left">
+              <template #trigger>
+                <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
+                <floatMenu v-if="passwordGenOptions.menuOpen">
+                  <template #body>
+                    <div class="w-full flex flex-col gap-2">
+                      <div class="w-full h-12 border-b border-solid border-black/10 flex gap-4 items-center">
+                        <span class="text-[#999] text-base font-normal">Caratteri</span>
+                        <SliderBar
+                          v-model="passwordGenOptions.length.value"
+                          :min="passwordGenOptions.length.min"
+                          :max="passwordGenOptions.length.max"
+                          :disabled="false"
+                        />
+                        <kyInput
+                          v-model="passwordGenOptions.length.value"
+                          type="number"
+                          size="small"
+                          forLabel="password_length"
+                          :min="passwordGenOptions.length.min"
+                          :max="passwordGenOptions.length.max"
+                          @update:modelValue="clampPasswordLength"
+                        />
+                      </div>
+                      <div class="w-full h-12 border-b border-solid border-black/10 flex items-center justify-between">
+                        <span class="text-[#999] text-base font-normal">Numeri</span>
+                        <checkbox v-model="passwordGenOptions.includeNumbers" :checked="passwordGenOptions.includeNumbers" />
+                      </div>
+                      <div class="w-full h-12 flex items-center justify-between">
+                        <span class="text-[#999] text-base font-normal">Simboli</span>
+                        <checkbox v-model="passwordGenOptions.includeSymbols" :checked="passwordGenOptions.includeSymbols" />
+                      </div>
+                    </div>
+                  </template>
+                  <template #footer>
+                    <kyButton @click="passwordGenOptions.menuOpen = false" type="button" size="small" variant="tertiary" label="Cancel" />
+                    <kyButton @click="generateNewAccountPassword" type="button" size="small" variant="primary-core" label="Generate" />
+                  </template>
+                </floatMenu>
+              </template>
+              <template #options>
+                <dropdownItem @click="passwordGenOptions.menuOpen = !passwordGenOptions.menuOpen" label="Genera una password sicura" />
+              </template>
+            </dropdown>
             <kyTextarea
               v-model="store.modals.newAccount.data.notes"
               label="Account notes"
@@ -41,7 +84,51 @@
               <kyInput v-model="store.modals.editAccount.data.username" type="text" label="Username" forLabel="username" />
             </div>
             <kyInput v-model="store.modals.editAccount.data.email" type="email" label="Email" forLabel="email" />
-            <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" />
+            <!-- <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" /> -->
+            <dropdown position="bottom-left">
+              <template #trigger>
+                <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" />
+                <floatMenu v-if="passwordGenOptions.menuOpen">
+                  <template #body>
+                    <div class="w-full flex flex-col gap-2">
+                      <div class="w-full h-12 border-b border-solid border-black/10 flex gap-4 items-center">
+                        <span class="text-[#999] text-base font-normal">Caratteri</span>
+                        <SliderBar
+                          v-model="passwordGenOptions.length.value"
+                          :min="passwordGenOptions.length.min"
+                          :max="passwordGenOptions.length.max"
+                          :disabled="false"
+                        />
+                        <kyInput
+                          v-model="passwordGenOptions.length.value"
+                          type="number"
+                          size="small"
+                          forLabel="password_length"
+                          :min="passwordGenOptions.length.min"
+                          :max="passwordGenOptions.length.max"
+                          @update:modelValue="clampPasswordLength"
+                        />
+                      </div>
+                      <div class="w-full h-12 border-b border-solid border-black/10 flex items-center justify-between">
+                        <span class="text-[#999] text-base font-normal">Numeri</span>
+                        <checkbox v-model="passwordGenOptions.includeNumbers" :checked="passwordGenOptions.includeNumbers" />
+                      </div>
+                      <div class="w-full h-12 flex items-center justify-between">
+                        <span class="text-[#999] text-base font-normal">Simboli</span>
+                        <checkbox v-model="passwordGenOptions.includeSymbols" :checked="passwordGenOptions.includeSymbols" />
+                      </div>
+                    </div>
+                  </template>
+                  <template #footer>
+                    <kyButton @click="passwordGenOptions.menuOpen = false" type="button" size="small" variant="tertiary" label="Cancel" />
+                    <kyButton @click="generateNewAccountPassword" type="button" size="small" variant="primary-core" label="Generate" />
+                  </template>
+                </floatMenu>
+              </template>
+              <template #options>
+                <dropdownItem @click="passwordGenOptions.menuOpen = !passwordGenOptions.menuOpen" label="Genera una password sicura" />
+              </template>
+            </dropdown>
             <kyTextarea
               v-model="store.modals.editAccount.data.notes"
               label="Account notes"
@@ -145,6 +232,7 @@ import { encryptPasswordWithVaultKey, decryptPasswordWithVaultKey, decryptPasswo
 import { generateAvatarFallback, AvatarSizes } from './lib/avatar';
 import { deleteAccount, toggleFavorite } from './lib/vaultOperations';
 import { formatCreatedDate, formatUpdatedDate } from './lib/dateUtils';
+import { generatePassword } from './lib/passwordGenerator';
 
 import modal from './components/modal/modal.vue';
 import kyInput from './components/input/ky-input.vue';
@@ -156,6 +244,9 @@ import dropdownItem from './components/dropdown/dropdown-item.vue';
 import kyGrouped from './components/button/ky-grouped.vue';
 import kyInputCopy from './components/button/ky-input-copy.vue';
 import toast from './components/toast/toast.vue';
+import floatMenu from './components/float/float-menu.vue';
+import SliderBar from './components/slider/slider-bar.vue';
+import checkbox from './components/toggle/checkbox.vue';
 
 export default {
   name: 'App',
@@ -170,6 +261,9 @@ export default {
     kyGrouped,
     kyInputCopy,
     toast,
+    floatMenu,
+    SliderBar,
+    checkbox,
   },
   data() {
     return {
@@ -178,6 +272,16 @@ export default {
       ENV: import.meta.env.VITE_ENV,
 
       sensitiveDataTimers: new Map(),
+      passwordGenOptions: {
+        menuOpen: false,
+        length: {
+          value: 16,
+          min: 8,
+          max: 100,
+        },
+        includeNumbers: true,
+        includeSymbols: true,
+      },
     };
   },
   methods: {
@@ -228,6 +332,32 @@ export default {
           .join('');
         account.tempDecryptedPassword = null;
       }
+    },
+    generateNewAccountPassword() {
+      const pwd = generatePassword({
+        length: this.passwordGenOptions.length.value,
+        includeNumbers: this.passwordGenOptions.includeNumbers,
+        includeSymbols: this.passwordGenOptions.includeSymbols,
+        excludeAmbiguous: true,
+        requireEach: true,
+      });
+
+      if (this.store.modals.newAccount.open) {
+        this.store.modals.newAccount.data.password = pwd;
+      } else if (this.store.modals.editAccount.open) {
+        this.store.modals.editAccount.data.password = pwd;
+      }
+
+      // this.passwordGenOptions.menuOpen = false;
+    },
+    clampPasswordLength(val) {
+      const min = this.passwordGenOptions.length.min;
+      const max = this.passwordGenOptions.length.max;
+      let n = Number(val);
+      if (!Number.isFinite(n)) n = min;
+      if (n < min) n = min;
+      if (n > max) n = max;
+      this.passwordGenOptions.length.value = n;
     },
 
     async getUser() {
