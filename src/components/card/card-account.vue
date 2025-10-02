@@ -6,7 +6,7 @@
     :class="{ loading: loading }"
   >
     <div class="card-info w-full flex gap-3 items-center justify-start">
-      <img v-if="!loading" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
+      <img v-if="!loading && false" :src="data?.website_logo" alt="Account image" loading="lazy" class="image-blurred" />
       <div class="account-image relative h-16 aspect-square rounded-2xl flex-none bg-[#e8e8e8]" :class="{ 'skeleton-shimmer': loading }">
         <img
           v-if="!loading && data?.website_logo"

@@ -20,12 +20,6 @@
             </div>
             <span v-if="store.sidebar.open" class="nav-label">Favorites</span>
           </RouterLink>
-          <RouterLink v-if="false" @click.stop to="/settings" class="nav-item">
-            <div class="nav-icon h-full flex items-center justify-center">
-              <Settings size="20" />
-            </div>
-            <span v-if="store.sidebar.open" class="nav-label">Settings</span>
-          </RouterLink>
         </div>
       </div>
       <div class="w-full">
@@ -37,7 +31,7 @@
           :label="store.sidebar.open ? 'Add new account' : ''"
           class="w-full"
         />
-        <div @click.stop class="w-full mt-6 flex gap-2.5 items-center cursor-pointer overflow-hidden">
+        <RouterLink to="/settings" class="w-full mt-6 flex gap-2.5 items-center cursor-pointer overflow-hidden">
           <div class="relative w-full max-w-[53px] aspect-square rounded-full overflow-hidden flex flex-none bg-[#104737]">
             <img v-if="auth.profile?.profile_image" :src="auth.profile?.profile_image" alt="Profile image" class="w-full h-full object-cover" />
             <span v-else class="w-full h-full flex items-center justify-center text-[#C6FF72] text-lg font-semibold">{{ getInitials }}</span>
@@ -46,7 +40,7 @@
             <h2 class="text-black text-base font-semibold">{{ getFullName }}</h2>
             <p class="text-[#999] text-xs font-normal">{{ auth.user?.email }}</p>
           </div>
-        </div>
+        </RouterLink>
       </div>
     </div>
   </div>
@@ -60,7 +54,7 @@ import { logout } from '../../lib/authService';
 import kyButton from '../../components/button/ky-button.vue';
 
 // ICONS
-import { Vault, Heart, Settings } from 'lucide-vue-next';
+import { Vault, Heart } from 'lucide-vue-next';
 
 export default {
   name: 'sidebar',
@@ -70,7 +64,6 @@ export default {
     // ICONS
     Vault,
     Heart,
-    Settings,
   },
   data() {
     return {

@@ -62,6 +62,15 @@ const routes = [
     meta: { title: 'Keyp', requiresAuth: true },
   },
 
+  // Setting
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../views/Settings/Settings.vue'),
+    props: true,
+    meta: { title: 'Keyp', requiresAuth: true },
+  },
+
   // Error
   {
     path: '/not-found',
