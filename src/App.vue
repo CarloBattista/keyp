@@ -20,6 +20,7 @@
             <dropdown position="bottom-left">
               <template #trigger>
                 <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
+                <strengthBar :password="store.modals.newAccount.data.password" class="mt-2" />
                 <floatMenu v-if="passwordGenOptions.menuOpen">
                   <template #body>
                     <div class="w-full flex flex-col gap-2">
@@ -88,6 +89,7 @@
             <dropdown position="bottom-left">
               <template #trigger>
                 <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" />
+                <strengthBar :password="store.modals.editAccount.data.password" class="mt-2" />
                 <floatMenu v-if="passwordGenOptions.menuOpen">
                   <template #body>
                     <div class="w-full flex flex-col gap-2">

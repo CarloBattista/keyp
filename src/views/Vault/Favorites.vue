@@ -4,7 +4,7 @@
     <mainView :innerContainer="640">
       <template #view>
         <div class="w-full flex flex-col gap-2.5">
-          <cardAccount v-for="account in accounts.data" :key="account.id" :data="account.vault_entries" />
+          <cardAccount v-for="account in accounts.data" :key="account.id" :data="account.vault_entries" :favorites="true" />
 
           <!-- Messaggio quando non ci sono account -->
           <div v-if="accounts.data?.length === 0 && !accounts.loading" class="text-center py-8 text-gray-500">

@@ -39,7 +39,7 @@ export async function deleteAccount(account, onSuccess = null) {
  * @param {Function} onSuccess - Callback da chiamare in caso di successo
  * @returns {Promise<boolean>} - True se l'operazione è riuscita
  */
-export async function toggleFavorite(account, onSuccess = null) {
+export async function toggleFavorite(account, favorites, onSuccess = null) {
   const profileId = auth.profile?.id;
   const accountId = account.id;
 
@@ -48,7 +48,7 @@ export async function toggleFavorite(account, onSuccess = null) {
   }
 
   try {
-    if (account.isFavorite) {
+    if (account.isFavorite || favorites) {
       // Rimuovi dai preferiti
       const { error } = await supabase.from('favorites').delete().eq('profile_id', profileId).eq('account_id', accountId);
 
@@ -63,7 +63,7 @@ export async function toggleFavorite(account, onSuccess = null) {
 
         return true;
       }
-    } else {
+    } else if (!account.isFavorite || favorites) {
       // Aggiungi ai preferiti
       const { error } = await supabase.from('favorites').insert({
         profile_id: profileId,

@@ -49,3 +49,8 @@ h5,
 h6 {
   overflow-wrap: break-word;
 }
+
+.dropdown-item.favorites .icon svg.lucide-star-icon {
+  fill: #000;
+  stroke: #000;
+}

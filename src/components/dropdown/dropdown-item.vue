@@ -4,7 +4,7 @@
     class="dropdown-item min-h-10 px-2 py-1 rounded-2xl flex gap-2 items-center"
     :class="['type-' + type, { disabled: disabled }]"
   >
-    <div class="h-full flex flex-none items-center justify-center">
+    <div class="icon h-full flex flex-none items-center justify-center">
       <component :is="icon" size="16" />
     </div>
     <span class="text-sm font-medium">{{ label }}</span>

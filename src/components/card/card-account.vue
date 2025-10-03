@@ -33,6 +33,12 @@
           <kyIconbutton type="button" variant="tertiary" size="small" icon="Ellipsis" />
         </template>
         <template #options>
+          <dropdownItem
+            @click="actionFavorites(data)"
+            icon="Star"
+            :label="favorites || data?.isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'"
+            :class="{ favorites: favorites || data?.isFavorite }"
+          />
           <dropdownItem @click="getAccountForEdit(data)" icon="Pencil" label="Modifica" />
           <dropdownItem @click="deleteAccount(data)" type="destructive" icon="Trash2" label="Elimina" />
         </template>
@@ -45,7 +51,7 @@
 <script>
 import { auth } from '../../data/auth';
 import { store } from '../../data/store';
-import { deleteAccount } from '../../lib/vaultOperations';
+import { deleteAccount, toggleFavorite } from '../../lib/vaultOperations';
 
 import kyIconbutton from '../button/ky-iconbutton.vue';
 import dropdown from '../dropdown/dropdown.vue';
@@ -60,6 +66,10 @@ export default {
   },
   props: {
     add: {
+      type: Boolean,
+      default: false,
+    },
+    favorites: {
       type: Boolean,
       default: false,
     },
@@ -105,6 +115,15 @@ export default {
       this.store.modals.editAccount.open = true;
     },
 
+    async actionFavorites(account) {
+      const success = await toggleFavorite(account, this.favorites, () => {
+        this.store.emitFavoritesUpdate();
+      });
+
+      if (!success) {
+        console.error('Operazione sui preferiti fallita');
+      }
+    },
     async deleteAccount(account) {
       const success = await deleteAccount(account, () => {
         this.$emit('load-accounts');
