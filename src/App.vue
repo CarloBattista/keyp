@@ -200,6 +200,7 @@
               @show-password="togglePasswordVisibility"
             />
           </kyGrouped>
+          <strengthBar v-if="store.modals.account.data?.showPassword" :password="store.modals.account.data?.tempDecryptedPassword" />
           <kyInputCopy v-if="store.modals.account.data?.username" type="text" label="Username" :value="store.modals.account.data?.username" />
           <kyInputCopy
             v-if="store.modals.account.data?.notes"
@@ -247,6 +248,7 @@ import toast from './components/toast/toast.vue';
 import floatMenu from './components/float/float-menu.vue';
 import SliderBar from './components/slider/slider-bar.vue';
 import checkbox from './components/toggle/checkbox.vue';
+import strengthBar from './components/strength/strength-bar.vue';
 
 export default {
   name: 'App',
@@ -264,6 +266,7 @@ export default {
     floatMenu,
     SliderBar,
     checkbox,
+    strengthBar,
   },
   data() {
     return {
