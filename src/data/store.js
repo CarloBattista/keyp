@@ -23,24 +23,6 @@ export const store = reactive({
   modals: {
     newAccount: {
       data: {
-        name: 'Test',
-        username: '',
-        email: 'test@gmail.com',
-        password: 'carlone',
-        notes: 'This is only for developing',
-      },
-      error: {
-        name: null,
-        username: null,
-        email: null,
-        password: null,
-        notes: null,
-      },
-      open: false,
-      loading: false,
-    },
-    editAccount: {
-      data: {
         name: '',
         username: '',
         email: '',
@@ -57,12 +39,34 @@ export const store = reactive({
       open: false,
       loading: false,
     },
+    editAccount: {
+      data: {},
+      error: {
+        name: null,
+        username: null,
+        email: null,
+        password: null,
+        notes: null,
+      },
+      open: false,
+      loading: false,
+    },
     account: {
       id: null,
       data: null,
       error: null,
       open: false,
       loading: false,
+    },
+
+    passwordExpiration: {
+      data: {
+        password_expiration_date: '.',
+      },
+      error: {
+        password_expiration_date: null,
+      },
+      open: false,
     },
   },
 

@@ -131,6 +131,11 @@ export default {
       this.focus = false;
     },
   },
+  mounted() {
+    if (this.type === 'date') {
+      this.focusInput();
+    }
+  },
 };
 </script>
 

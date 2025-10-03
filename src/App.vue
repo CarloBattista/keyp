@@ -8,8 +8,20 @@
       {{ ENV === 'debug' ? 'In testing environment' : 'in production environment' }}
     </div>
 
-    <modal v-if="store.modals.newAccount.open" :header="true" :footer="true" :closable="true" modalKey="newAccount" head="Aggiungi un nuovo account">
+    <modal
+      v-if="store.modals.newAccount.open && !store.modals.passwordExpiration.open"
+      :header="true"
+      :footer="true"
+      modalKey="newAccount"
+      head="Aggiungi un nuovo account"
+    >
       <template #body>
+        <notification
+          v-if="store.modals.passwordExpiration.data.password_expiration_date !== '.'"
+          type="warning"
+          :message="'La password scadrà il ' + formatCreatedDate(store.modals.account.data.password_expiration_date, { showTime: true })"
+          class="mb-2"
+        />
         <form @submit.prevent>
           <div class="w-full flex flex-col gap-4 mb-4">
             <div class="w-full grid grid-cols-2 gap-4">
@@ -20,7 +32,11 @@
             <dropdown position="bottom-left">
               <template #trigger>
                 <kyInput v-model="store.modals.newAccount.data.password" type="password" label="Password" forLabel="password" />
-                <strengthBar :password="store.modals.newAccount.data.password" class="mt-2" />
+                <strengthBar
+                  v-if="store.modals.newAccount.data.password.length >= 1"
+                  :password="store.modals.newAccount.data.password"
+                  class="mt-2"
+                />
                 <floatMenu v-if="passwordGenOptions.menuOpen">
                   <template #body>
                     <div class="w-full flex flex-col gap-2">
@@ -60,8 +76,19 @@
               </template>
               <template #options>
                 <dropdownItem @click="passwordGenOptions.menuOpen = !passwordGenOptions.menuOpen" label="Genera una password sicura" />
+                <dropdownItem
+                  @click="handleModalExpirationPassword('newAccount', store.modals.newAccount.data)"
+                  :label="
+                    store.modals.passwordExpiration.data.password_expiration_date !== '.'
+                      ? 'Modifica scadenza password'
+                      : 'Aggiungi scadenza password'
+                  "
+                />
               </template>
             </dropdown>
+            <p v-if="store.modals.passwordExpiration.data.password_expiration_date !== '.'">
+              La password scadrà il {{ formatCreatedDate(store.modals.passwordExpiration.data.password_expiration_date, { showTime: true }) }}
+            </p>
             <kyTextarea
               v-model="store.modals.newAccount.data.notes"
               label="Account notes"
@@ -76,8 +103,20 @@
         <kyButton @click="actionAddAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.newAccount.loading" />
       </template>
     </modal>
-    <modal v-if="store.modals.editAccount.open" :header="true" :footer="true" :closable="true" modalKey="editAccount" head="Modifica account">
+    <modal
+      v-if="store.modals.editAccount.open && !store.modals.passwordExpiration.open"
+      :header="true"
+      :footer="true"
+      modalKey="editAccount"
+      head="Modifica account"
+    >
       <template #body>
+        <notification
+          v-if="store.modals.passwordExpiration.data.password_expiration_date !== '.'"
+          type="warning"
+          :message="'La password scadrà il ' + formatCreatedDate(store.modals.account.data.password_expiration_date, { showTime: true })"
+          class="mb-2"
+        />
         <form @submit.prevent>
           <div class="w-full flex flex-col gap-4 mb-4">
             <div class="w-full grid grid-cols-2 gap-4">
@@ -89,7 +128,11 @@
             <dropdown position="bottom-left">
               <template #trigger>
                 <kyInput v-model="store.modals.editAccount.data.password" type="password" label="Password" forLabel="password" />
-                <strengthBar :password="store.modals.editAccount.data.password" class="mt-2" />
+                <strengthBar
+                  v-if="store.modals.editAccount.data.password.length >= 1"
+                  :password="store.modals.editAccount.data.password"
+                  class="mt-2"
+                />
                 <floatMenu v-if="passwordGenOptions.menuOpen">
                   <template #body>
                     <div class="w-full flex flex-col gap-2">
@@ -129,6 +172,14 @@
               </template>
               <template #options>
                 <dropdownItem @click="passwordGenOptions.menuOpen = !passwordGenOptions.menuOpen" label="Genera una password sicura" />
+                <dropdownItem
+                  @click="handleModalExpirationPassword('editAccount', store.modals.editAccount.data)"
+                  :label="
+                    store.modals.passwordExpiration.data.password_expiration_date !== '.'
+                      ? 'Modifica scadenza password'
+                      : 'Aggiungi scadenza password'
+                  "
+                />
               </template>
             </dropdown>
             <kyTextarea
@@ -145,7 +196,13 @@
         <kyButton @click="actionUpdateAccount" type="submit" variant="primary-core" label="Save" :loading="store.modals.editAccount.loading" />
       </template>
     </modal>
-    <modal v-if="store.modals.account.open" :header="true" :footer="false" :closable="true" modalKey="account" head="Dettagli account">
+    <modal
+      v-if="store.modals.account.open && !store.modals.passwordExpiration.open"
+      :header="true"
+      :footer="false"
+      modalKey="account"
+      head="Dettagli account"
+    >
       <template #body>
         <div class="card-info w-full flex gap-3 items-center justify-start">
           <div class="account-image relative h-19 aspect-square rounded-[20px] flex-none bg-[#e8e8e8]">
@@ -183,6 +240,12 @@
           </div>
         </div>
         <div class="w-full mt-6 flex flex-col gap-4">
+          <notification
+            v-if="store.modals.account.data.password_expiration_date"
+            type="warning"
+            :message="'La password scadrà il ' + formatCreatedDate(store.modals.account.data.password_expiration_date, { showTime: true })"
+            class="mb-2"
+          />
           <kyGrouped>
             <kyInputCopy
               v-if="store.modals.account.data?.email"
@@ -202,7 +265,10 @@
               @show-password="togglePasswordVisibility"
             />
           </kyGrouped>
-          <strengthBar v-if="store.modals.account.data?.showPassword" :password="store.modals.account.data?.tempDecryptedPassword" />
+          <strengthBar
+            v-if="store.modals.account.data?.showPassword && store.modals.account.data?.tempDecryptedPassword.length >= 1"
+            :password="store.modals.account.data?.tempDecryptedPassword"
+          />
           <kyInputCopy v-if="store.modals.account.data?.username" type="text" label="Username" :value="store.modals.account.data?.username" />
           <kyInputCopy
             v-if="store.modals.account.data?.notes"
@@ -221,6 +287,24 @@
       </template>
       <template #footer></template>
     </modal>
+
+    <modalAction v-if="store.modals.passwordExpiration.open" modalKey="passwordExpiration" head="Scadenza password">
+      <template #body>
+        <form @submit.prevent>
+          <kyInput
+            v-model="store.modals.passwordExpiration.data.password_expiration_date"
+            type="datetime-local"
+            label="Scadenza password"
+            forLabel="password_expiration_date"
+            :error="store.modals.passwordExpiration.error.password_expiration_date"
+          />
+        </form>
+      </template>
+      <template #footer>
+        <kyButton @click="store.modals.passwordExpiration.open = false" type="button" variant="tertiary" label="Cancel" />
+        <kyButton @click="store.modals.passwordExpiration.open = false" type="submit" variant="primary-core" label="Save" />
+      </template>
+    </modalAction>
   </div>
   <toast />
 </template>
@@ -238,6 +322,7 @@ import { formatCreatedDate, formatUpdatedDate } from './lib/dateUtils';
 import { generatePassword } from './lib/passwordGenerator';
 
 import modal from './components/modal/modal.vue';
+import modalAction from './components/modal/modal-action.vue';
 import kyInput from './components/input/ky-input.vue';
 import kyTextarea from './components/input/ky-textarea.vue';
 import kyButton from './components/button/ky-button.vue';
@@ -251,11 +336,13 @@ import floatMenu from './components/float/float-menu.vue';
 import SliderBar from './components/slider/slider-bar.vue';
 import checkbox from './components/toggle/checkbox.vue';
 import strengthBar from './components/strength/strength-bar.vue';
+import notification from './components/notification/notification.vue';
 
 export default {
   name: 'App',
   components: {
     modal,
+    modalAction,
     kyInput,
     kyTextarea,
     kyButton,
@@ -269,6 +356,7 @@ export default {
     SliderBar,
     checkbox,
     strengthBar,
+    notification,
   },
   data() {
     return {
@@ -363,6 +451,13 @@ export default {
       if (n < min) n = min;
       if (n > max) n = max;
       this.passwordGenOptions.length.value = n;
+    },
+    handleModalExpirationPassword(modalKey) {
+      this.store.modals.passwordExpiration.open = true;
+
+      if (this.store.modals[modalKey].open) {
+        this.store.modals.passwordExpiration.data.password_expiration_date;
+      }
     },
 
     async getUser() {
@@ -463,6 +558,8 @@ export default {
           password: encryptionResult.encryptedPassword,
           password_salt: encryptionResult.passwordSalt,
           notes: this.store.modals.newAccount.data.notes,
+          password_expiration_date: this.store.modals.passwordExpiration.data.password_expiration_date,
+          password_last_changed: new Date().toISOString(),
           website_logo: websiteLogo,
         });
 
@@ -473,6 +570,14 @@ export default {
           if (CURRENT_ROUTE !== '/vault') {
             this.$router.push({ name: 'vault' });
           }
+
+          this.store.modals.newAccount.data.name = '';
+          this.store.modals.newAccount.data.username = '';
+          this.store.modals.newAccount.data.email = '';
+          this.store.modals.newAccount.data.password = '';
+          this.store.modals.newAccount.data.notes = '';
+          this.store.modals.newAccount.data.password_expiration_date = '';
+          this.store.modals.passwordExpiration.data.password_expiration_date = '';
         }
       } catch (e) {
         console.error(e);
@@ -587,11 +692,13 @@ export default {
 
         // Prepara i dati da aggiornare
         const updateData = {
+          updated_at: new Date().toISOString(),
           name: accountData.name,
           email: accountData.email,
           username: accountData.username,
           notes: accountData.notes,
-          updated_at: new Date().toISOString(),
+          password_expiration_date: this.store.modals.passwordExpiration.data.password_expiration_date,
+          password_last_changed: new Date().toISOString(),
         };
 
         // Se la password è stata modificata, crittografala
@@ -609,6 +716,14 @@ export default {
         if (!error) {
           this.store.modals.editAccount.open = false;
           await this.loadAccounts();
+
+          this.store.modals.editAccount.data.name = '';
+          this.store.modals.editAccount.data.username = '';
+          this.store.modals.editAccount.data.email = '';
+          this.store.modals.editAccount.data.password = '';
+          this.store.modals.editAccount.data.notes = '';
+          this.store.modals.editAccount.data.password_expiration_date = '';
+          this.store.modals.passwordExpiration.data.password_expiration_date = '';
         }
       } catch (e) {
         console.error(e);

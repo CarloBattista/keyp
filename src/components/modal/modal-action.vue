@@ -1,36 +1,31 @@
 <template>
-  <div @click="closeModal" class="fixed z-[998] top-0 left-0 w-full h-svh">
+  <div @click="closeModal" v-if="overlay" class="fixed z-[998] top-0 left-0 w-full h-svh">
     <div class="relative w-full h-full bg-black opacity-70"></div>
   </div>
   <div
-    id="popup-modal"
+    id="crud-modal"
     tabindex="-1"
-    class="fixed z-[999] top-0 right-0 left-0 overflow-y-auto overflow-x-hidden flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full"
+    aria-hidden="true"
+    class="fixed z-[999] top-0 overflow-y-auto overflow-x-hidden flex justify-center items-center w-full h-svh p-4 pointer-events-none"
   >
-    <div class="relative p-4 w-full max-w-md max-h-full">
-      <div class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
-        <div class="p-4 md:p-5 text-center">
-          <!-- Modal header -->
-          <div v-if="header" class="flex items-center justify-between rounded-t">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ head }}</h3>
-            <button
-              @click="closeModal"
-              v-if="closable"
-              type="button"
-              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-              data-modal-toggle="crud-modal"
-            >
-              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-              </svg>
-              <span class="sr-only">Close modal</span>
-            </button>
-          </div>
-          <h3 v-if="description" class="my-5 text-lg font-normal text-gray-500 dark:text-gray-400">{{ description }}</h3>
-          <!-- Modal Footer -->
-          <div v-if="footer" class="flex items-center justify-center pt-4 border-t rounded-b dark:border-gray-600 border-gray-200">
-            <slot name="footer" />
-          </div>
+    <div class="relative w-full sm:max-w-md">
+      <!-- Modal content -->
+      <div
+        class="modal-content relative w-full h-full bg-white rounded-lg shadow-sm pointer-events-auto"
+        :class="{ 'has-header': header, 'has-footer': footer }"
+      >
+        <!-- Modal header -->
+        <div v-if="header" class="modal-header w-full h-16 flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+          <h3 class="text-lg font-semibold text-[#104737]">{{ head }}</h3>
+          <kyIconbutton v-if="closable" @click="closeModal" type="button" variant="tertiary" size="small" icon="X" />
+        </div>
+        <!-- Modal Body -->
+        <div class="modal-body w-full p-4 md:p-5">
+          <slot name="body" />
+        </div>
+        <!-- Modal Footer -->
+        <div v-if="footer" class="modal-footer w-full h-16 flex gap-3 items-center justify-start p-4 md:p-5 border-t rounded-b border-gray-200">
+          <slot name="footer" />
         </div>
       </div>
     </div>
@@ -40,10 +35,19 @@
 <script>
 import { store } from '../../data/store';
 
+import kyIconbutton from '../button/ky-iconbutton.vue';
+
 export default {
   name: 'modal-action',
+  components: {
+    kyIconbutton,
+  },
   props: {
     modalKey: String,
+    overlay: {
+      type: Boolean,
+      default: true,
+    },
     header: {
       type: Boolean,
       default: true,
@@ -62,14 +66,42 @@ export default {
   data() {
     return {
       store,
+      isModified: false,
     };
   },
   methods: {
     closeModal() {
       if (this.modalKey) {
+        if (this.isModified) {
+          const confirmClose = confirm('Vuoi continuare con le modifiche oppure no?');
+          if (!confirmClose) {
+            return;
+          }
+        }
         this.store.modals[this.modalKey].open = false;
+        this.isModified = false;
+
+        this.store.modals[this.modalKey].data = {
+          name: '',
+          username: '',
+          email: '',
+          password: '',
+          notes: '',
+        };
       }
     },
+  },
+  mounted() {
+    // Logga quando cambiano i dati della modale (campi modificati)
+    this.$watch(
+      () => JSON.stringify(this.store.modals[this.modalKey]?.data),
+      (newValue, oldValue) => {
+        if (oldValue !== undefined && newValue !== oldValue) {
+          this.isModified = true;
+          // console.log('Vedo delle modifiche');
+        }
+      }
+    );
   },
 };
 </script>

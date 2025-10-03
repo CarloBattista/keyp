@@ -1,5 +1,5 @@
 <template>
-  <div @click="closeModal" class="fixed z-[998] top-0 left-0 w-full h-svh">
+  <div @click="closeModal" v-if="overlay" class="fixed z-[998] top-0 left-0 w-full h-svh">
     <div class="relative w-full h-full bg-black opacity-70"></div>
   </div>
   <div
@@ -44,6 +44,10 @@ export default {
   },
   props: {
     modalKey: String,
+    overlay: {
+      type: Boolean,
+      default: true,
+    },
     header: {
       type: Boolean,
       default: true,
@@ -61,14 +65,42 @@ export default {
   data() {
     return {
       store,
+      isModified: false,
     };
   },
   methods: {
     closeModal() {
       if (this.modalKey) {
+        if (this.isModified) {
+          const confirmClose = confirm('Vuoi continuare con le modifiche oppure no?');
+          if (!confirmClose) {
+            return;
+          }
+        }
         this.store.modals[this.modalKey].open = false;
+        this.isModified = false;
+
+        this.store.modals[this.modalKey].data = {
+          name: '',
+          username: '',
+          email: '',
+          password: '',
+          notes: '',
+        };
       }
     },
+  },
+  mounted() {
+    // Logga quando cambiano i dati della modale (campi modificati)
+    this.$watch(
+      () => JSON.stringify(this.store.modals[this.modalKey]?.data),
+      (newValue, oldValue) => {
+        if (oldValue !== undefined && newValue !== oldValue) {
+          // console.log('Vedo delle modifiche');
+          this.isModified = true;
+        }
+      }
+    );
   },
 };
 </script>
