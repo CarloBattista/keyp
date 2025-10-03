@@ -33,6 +33,22 @@ export async function deleteAccount(account, onSuccess = null) {
   }
 }
 
+// Helper: aggiorna localmente isFavorite cercando per accountId
+function updateLocalFavoriteById(accountId, isFavorite) {
+  const account = store.accounts.data.find((a) => a.id === accountId);
+  if (account) {
+    account.isFavorite = !!isFavorite;
+  }
+
+  // Aggiorna anche l'account aperto nella modale dei dettagli, se presente
+  if (store.modals.account?.data && store.modals.account.data.id === accountId) {
+    store.modals.account.data.isFavorite = !!isFavorite;
+  }
+
+  // Notifica il cambiamento ai listener interni
+  store.emitFavoritesUpdate();
+}
+
 /**
  * Aggiunge o rimuove un account dai preferiti
  * @param {Object} account - L'account da modificare
@@ -53,7 +69,7 @@ export async function toggleFavorite(account, favorites, onSuccess = null) {
       const { error } = await supabase.from('favorites').delete().eq('profile_id', profileId).eq('account_id', accountId);
 
       if (!error) {
-        account.isFavorite = false;
+        updateLocalFavoriteById(accountId, false);
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess();
         }
@@ -71,7 +87,7 @@ export async function toggleFavorite(account, favorites, onSuccess = null) {
       });
 
       if (!error) {
-        account.isFavorite = true;
+        updateLocalFavoriteById(accountId, true);
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess();
         }
@@ -83,7 +99,7 @@ export async function toggleFavorite(account, favorites, onSuccess = null) {
       }
     }
   } catch (e) {
-    console.error("Errore durante l'operazione sui preferiti:", e);
+    console.error(e);
     return false;
   }
 
